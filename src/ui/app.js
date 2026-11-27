@@ -190,13 +190,15 @@ function renderHud() {
   for (const j of state.journal) counts[j.toSphere ?? j.sphere]++;
   // кольцо прожитой жизни дорастает от прошлого значения, счётчик сыгранной масти чуть подпрыгивает
   const p = state.journal.length / TOTAL_EPISODES;
-  const was = hudWas && hudWas.sex === state.sex ? hudWas : { p, counts };
-  hudWas = { sex: state.sex, p, counts };
+  const was = hudWas && hudWas.sex === state.sex ? hudWas : { p, counts, age };
+  hudWas = { sex: state.sex, p, counts, age };
+  const ageBig = el('span', { class: 'age-big' }, `${age} ${yearsWord(age)}`);
+  if (was.age < age && !calm()) countUp(ageBig, was.age, age);
   hud.replaceChildren(el('div', { class: 'wrap' },
     el('div', { class: 'hud-in' },
       el('div', { class: 'avatar', style: `--p:${p};--p0:${Math.min(was.p, p)}` }, picture(ageFor(state.sex, faceAge(age)), '', 'face', true)),
       el('div', { class: 'hud-age' },
-        el('span', { class: 'age-big' }, `${age} ${yearsWord(age)}`),
+        ageBig,
         el('span', { class: 'hud-step' }, over ? 'жизнь прожита' : `решение ${ep} из ${TOTAL_EPISODES}`)),
       el('ul', { class: 'suits', 'aria-label': 'Сколько карт каждой масти сыграно' },
         SUITS.map((s, i) => el('li', { class: `suit-count sp${i}${counts[i] > was.counts[i] ? ' bump' : ''}`, title: `${s.name}: ${counts[i]}` }, icon(i), el('b', {}, String(counts[i])))))),
@@ -206,6 +208,18 @@ function renderHud() {
       return el('li', { class: j ? `seg done sp${j.toSphere ?? j.sphere}` : now ? 'seg now' : 'seg', 'aria-current': now ? 'step' : false },
         el('span', { class: 'seg-age' }, String(a)));
     }))));
+}
+
+/** Годы между сценами пролетают на табло: 17, 18, … 23 года. */
+function countUp(node, from, to) {
+  const say = (n) => { node.textContent = typo(`${n} ${yearsWord(n)}`); };
+  let n = from;
+  say(n);
+  const t = setInterval(() => {
+    if (!node.isConnected) { clearInterval(t); return; }
+    say(++n);
+    if (n >= to) clearInterval(t);
+  }, Math.round(Math.min(110, Math.max(55, 620 / (to - from)))));
 }
 
 const shareUrls = []; // картинки карточки типа живут, пока открыт финал
@@ -398,6 +412,7 @@ function renderResult() {
   const next = () => {
     if (busy) return;
     busy = true;
+    endingFresh = isOver(state); // жизнь только что закончилась: в финале она пролетит перед глазами
     const go = () => {
       try { state = acknowledge(state); persist(); } finally { busy = false; }
       render();
@@ -778,6 +793,86 @@ function shareRow(t, ep) {
   return row;
 }
 
+/** Вся жизнь перед глазами: в картинке финала одна за другой проходят сыгранные сцены, от шести лет до последнего вечера.
+ *  Сама запускается один раз, когда жизнь только что закончилась (и не при «меньше движения»), потом — кнопкой на картинке.
+ *  Нажатие на картинку во время показа его останавливает. */
+let endingFresh = false;
+const REEL_STEP = 850;
+const REEL_ORIGINS = ['50% 42%', '38% 50%', '62% 46%', '50% 60%'];
+function playIcon() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('class', 'ico ico-play');
+  svg.setAttribute('aria-hidden', 'true');
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('d', 'M8 5.8v12.4a.6.6 0 0 0 .92.5l9.7-6.2a.6.6 0 0 0 0-1L8.92 5.3a.6.6 0 0 0-.92.5z');
+  svg.append(p);
+  return svg;
+}
+function lifeReel(lastJ) {
+  const fig = art(imageFor(lastJ.img), 'Последний вечер', lastJ.sphere);
+  const fresh = endingFresh;
+  endingFresh = false;
+  const shots = state.journal.slice(0, -1).map((j) => ({ src: imageFor(j.img), age: ageOf(j.episode), title: j.title })).filter((s) => s.src);
+  if (shots.length < 4) return fig;
+  const last = { age: ageOf(lastJ.episode), title: lastJ.title };
+  const cap = el('span', { class: 'reel-cap', 'aria-hidden': 'true' });
+  const bar = el('span', { class: 'reel-bar', 'aria-hidden': 'true' });
+  const btn = el('button', { class: 'reel-btn', type: 'button' }, playIcon(), 'Пролистать жизнь');
+  fig.classList.add('reel');
+  fig.append(cap, bar, btn);
+  const say = (s) => { cap.textContent = typo(`${s.age} ${yearsWord(s.age)} · ${s.title}`); };
+  let frames = null;
+  let run = 0; // номер показа: таймеры прошлого показа видят, что он уже не их, и молчат
+  const frameSet = () => frames || (frames = shots.map((s, i) => fig.insertBefore(
+    el('img', { class: 'reel-frame', src: s.src.local, alt: '', decoding: 'async', style: `transform-origin:${REEL_ORIGINS[i % REEL_ORIGINS.length]}` }), cap)));
+  const later = (mine, ms, f) => setTimeout(() => { if (mine === run && fig.isConnected) f(); }, ms);
+  const stop = () => {
+    run++;
+    fig.classList.remove('playing', 'cued');
+    if (frames) frames.forEach((f) => f.classList.remove('on'));
+  };
+  async function play() {
+    const mine = ++run;
+    const list = frameSet();
+    fig.classList.add('cued');
+    // кадры, которые не успели загрузиться за четыре секунды, пропускаются
+    await Promise.race([Promise.allSettled(list.map((f) => f.decode())), new Promise((ok) => setTimeout(ok, 4000))]);
+    if (mine !== run || !fig.isConnected) return;
+    const ready = list.map((f, i) => [f, shots[i]]).filter(([f]) => f.complete && f.naturalWidth);
+    if (ready.length < 4) { fig.classList.remove('cued'); return; }
+    list.forEach((f) => f.classList.remove('on'));
+    fig.style.setProperty('--reel', `${(ready.length + 1) * REEL_STEP}ms`);
+    fig.classList.add('playing');
+    let k = 0;
+    const tick = () => {
+      if (k < ready.length) {
+        const [f, s] = ready[k];
+        const prev = k > 0 ? ready[k - 1][0] : null;
+        f.classList.add('on');
+        say(s);
+        if (prev) later(mine, 700, () => prev.classList.remove('on')); // прошлый кадр гаснет, когда новый уже лёг поверх
+        k++;
+        later(mine, REEL_STEP, tick);
+      } else {
+        ready[ready.length - 1][0].classList.remove('on'); // под последним кадром — последний вечер
+        say(last);
+        later(mine, 1700, () => fig.classList.remove('playing', 'cued'));
+      }
+    };
+    tick();
+  }
+  btn.addEventListener('click', (e) => { e.stopPropagation(); if (fig.classList.contains('playing')) stop(); else play(); });
+  fig.addEventListener('click', () => { if (fig.classList.contains('playing')) stop(); });
+  if (fresh && !calm()) {
+    frameSet(); // кадры начинают грузиться сразу, пока читается первая строка
+    fig.classList.add('cued');
+    setTimeout(() => { if (fig.isConnected && !run) play(); }, 1300);
+  }
+  return fig;
+}
+
 function renderEnding() {
   const ep = buildEpilogue(state);
   const t = ep.type;
@@ -791,7 +886,7 @@ function renderEnding() {
     el('td', {}, r.choice)));
   root.append(el('article', { class: 'ending' },
     el('section', { class: 'card finale deal' },
-      art(imageFor(lastJ.img), 'Последний вечер', lastJ.sphere),
+      lifeReel(lastJ),
       el('div', { class: 'card-body' },
         el('p', { class: 'card-meta' }, 'Конец жизни'),
         el('h2', { class: 'scene-title' }, 'Что осталось'),
