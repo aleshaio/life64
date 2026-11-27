@@ -5662,13 +5662,19 @@ async function typeCard(t, ep) {
     ctx.fillStyle = l === hl ? '#a98238' : '#23282a';
     for (const [x0, w0] of line(state.bits, l) ? [[0, 20]] : [[0, 7.8], [12.2, 7.8]]) { roundRect(ctx, hx + x0 * hs, ry, w0 * hs, 2.2 * hs, 2); ctx.fill(); }
   }
+  ctx.font = `700 36px ${F}`;
+  const brandW = ctx.measureText('Прожить жизнь').width;
+  const tx = hx + 52 + 26, room2 = R - brandW - 36 - tx;
   ctx.fillStyle = '#5f6769';
   ctx.font = `500 26px ${F}`;
-  ctx.fillText('Итог по И-Цзин', hx + 52 + 26, hy + 22);
+  ctx.fillText('Итог по И-Цзин', tx, hy + 22);
+  // название узла целиком: сначала кегль поменьше, потом в две строки
   ctx.fillStyle = '#23282a';
-  ctx.font = `600 30px ${F}`;
-  const motif = wrapText(ctx, `№${ep.final.hex} «${ep.final.motif}»`, IW * 0.5, 1)[0];
-  ctx.fillText(motif, hx + 52 + 26, hy + 60);
+  const motifText = `№${ep.final.hex} «${ep.final.motif}»`;
+  let fs = 30;
+  for (; fs > 23; fs -= 2) { ctx.font = `600 ${fs}px ${F}`; if (ctx.measureText(motifText).width <= room2) break; }
+  const mLines = ctx.measureText(motifText).width <= room2 ? [motifText] : wrapText(ctx, motifText, room2, 2);
+  mLines.forEach((ln, i) => ctx.fillText(ln, tx, hy + 60 + i * (fs + 6)));
   ctx.textAlign = 'right';
   ctx.font = `700 36px ${F}`;
   ctx.fillText('Прожить жизнь', R, hy + 22);
