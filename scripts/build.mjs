@@ -16,6 +16,8 @@ const strip = (src) => src
 const code = ORDER.map((f) => `// ---- ${f} ----\n${strip(readFileSync(join(root, f), 'utf8'))}`).join('\n');
 if (/^\s*(import|export)\s/m.test(code)) throw new Error('остались import/export');
 const body = readFileSync(join(root, 'src/ui/template.html'), 'utf8');
+// Описание, значки и превью ссылки (Open Graph) — только для сайта: у Artifact своя шапка.
+const head = readFileSync(join(root, 'src/ui/head.html'), 'utf8');
 const script = `<script>\n"use strict";\n(() => {\n${code}\n})();\n</script>\n`;
 
 mkdirSync(join(root, 'dist'), { recursive: true });
@@ -23,5 +25,5 @@ mkdirSync(join(root, 'dist'), { recursive: true });
 writeFileSync(join(root, 'dist/artifact.html'), body + script);
 // Самостоятельная страница.
 writeFileSync(join(root, 'dist/index.html'),
-  `<!doctype html>\n<html lang="ru">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n</head>\n<body>\n${body}${script}</body>\n</html>\n`);
+  `<!doctype html>\n<html lang="ru">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n${head}</head>\n<body>\n${body}${script}</body>\n</html>\n`);
 console.log('dist/index.html и dist/artifact.html собраны,', Math.round((body.length + script.length) / 1024), 'КБ');

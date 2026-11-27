@@ -49,8 +49,9 @@
 .sp3 { --sp: var(--close); --sp-hi: var(--close-hi); }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; min-height: 100vh; background: var(--table); color: var(--table-ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+html { -webkit-text-size-adjust: 100%; background: var(--table); }
+/* сверху отступ под строку состояния телефона (у игры с экрана «Домой» она поверх страницы) */
+body { margin: 0; min-height: 100vh; padding-top: env(safe-area-inset-top, 0px); background: var(--table); color: var(--table-ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
 p, li { text-wrap: pretty; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--table); }
@@ -69,10 +70,15 @@ button { -webkit-tap-highlight-color: transparent; }
 .hexno { font-size: .78rem; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
 
 /* табло: лицо героя в нужном возрасте, возраст, сколько карт каждой стороны сыграно, полоса жизни */
-.hud { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8; background: var(--table); border-bottom: 1px solid var(--table-line); box-shadow: 0 6px 18px var(--shade); }
+.hud { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8; background: var(--table); border-bottom: 1px solid var(--table-line); box-shadow: 0 6px 18px var(--shade); view-transition-name: hud; }
 .hud-in { display: flex; align-items: center; gap: .7rem; padding-block: .55rem .45rem; }
-.avatar { --p: 0; width: 2.9rem; height: 2.9rem; flex: none; border-radius: 50%; padding: 2px; background: conic-gradient(var(--accent) calc(var(--p) * 1turn), var(--table-line) 0); }
-.avatar .face { width: 100%; height: 100%; margin: 0; border-radius: 50%; overflow: hidden; background: var(--table-deep); border: 2px solid var(--table); }
+/* кольцо прожитой жизни дорастает от прошлого значения (--p0) до нового (--p) */
+@property --p { syntax: '<number>'; inherits: false; initial-value: 0; }
+.avatar { --p: 0; width: 2.9rem; height: 2.9rem; flex: none; border-radius: 50%; padding: 2px; background: conic-gradient(var(--accent) calc(var(--p) * 1turn), var(--table-line) 0);
+  animation: ring .9s .2s cubic-bezier(.2, .8, .2, 1) backwards; }
+.avatar .face { width: 100%; height: 100%; margin: 0; border-radius: 50%; overflow: hidden; background: var(--table-deep); border: 2px solid var(--table); view-transition-name: face; }
+.age-big { view-transition-name: hud-age; }
+.suit-count.bump { animation: bump .6s .35s cubic-bezier(.2, .8, .2, 1) backwards; }
 .face img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .face.gone img { display: none; }
 .face.gone { background: radial-gradient(ellipse 22% 22% at 50% 44%, var(--silhouette-hi) 0 96%, transparent 100%), radial-gradient(ellipse 40% 30% at 50% 104%, var(--silhouette-hi) 0 97%, transparent 100%), var(--table-deep); }
@@ -115,7 +121,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .card-body { padding: 1.05rem 1.15rem 1.3rem; display: flex; flex-direction: column; gap: .8rem; min-width: 0; }
 .card-meta { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: .3rem .55rem; font-size: .85rem; color: var(--ink-dim); }
 .card-meta .suit::after { content: "·"; margin-left: .25rem; color: var(--card-3); }
-.art { position: relative; margin: 0; aspect-ratio: 3 / 2; max-width: 100%; background: linear-gradient(160deg, var(--card-2), var(--card-3)); }
+.art { position: relative; margin: 0; aspect-ratio: 3 / 2; max-width: 100%; overflow: hidden; background: linear-gradient(160deg, var(--card-2), var(--card-3)); }
 .art img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .5s ease; }
 .art.ready img { opacity: 1; }
 .art.gone img { display: none; }
@@ -193,7 +199,19 @@ button { -webkit-tap-highlight-color: transparent; }
 .tokens li { display: flex; align-items: center; gap: .6rem; font-size: .96rem; line-height: 1.35; }
 .fork-row { display: grid; gap: .8rem; }
 .mini { min-width: 0; border-radius: 14px; padding: .85rem .95rem; display: flex; flex-direction: column; gap: .3rem; }
-.mini.open { background: var(--card); color: var(--ink); box-shadow: 0 0 0 2px var(--accent), var(--lift); }
+.mini.open { padding: 0; gap: 0; overflow: hidden; background: var(--card); color: var(--ink); box-shadow: 0 0 0 2px var(--accent), var(--lift); }
+.mini-art { aspect-ratio: 2 / 1; }
+.mini-body { display: flex; flex-direction: column; gap: .3rem; padding: .75rem .95rem .9rem; min-width: 0; }
+/* следующая карта: заголовок, а если впереди новый возраст — как изменится лицо */
+.fork-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: .7rem; }
+.fork-head .table-title { margin: 0; }
+.grow { display: flex; align-items: flex-start; gap: .45rem; }
+.grow-face { margin: 0; display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+.grow-face .face { width: 2.7rem; height: 2.7rem; margin: 0; border-radius: 50%; overflow: hidden; background: var(--table-deep); border: 2px solid var(--table-line); }
+.grow-face:last-child .face { border-color: var(--accent); }
+.grow-face figcaption { font-size: .72rem; line-height: 1.2; color: var(--table-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.grow-face:last-child figcaption { color: var(--accent); font-weight: 600; }
+.grow-arrow { align-self: center; margin-top: -1rem; color: var(--table-mid); }
 .mini.closed { flex-direction: row; align-items: baseline; gap: .7rem; padding: .55rem .8rem; color: var(--table-dim); border: 1px dashed var(--table-line); }
 .mini-suit { display: inline-flex; align-items: center; gap: .3rem; font-size: .84rem; font-weight: 600; color: var(--ink-dim); }
 .mini-suit .ico { color: var(--sp); }
@@ -242,6 +260,13 @@ button { -webkit-tap-highlight-color: transparent; }
 .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .5s ease; }
 .portrait.ready img { opacity: 1; }
 .portrait.gone img { display: none; }
+/* на старте при наведении лицо взрослеет: слои старших возрастов поверх и подпись возраста */
+.hero-card .portrait { position: relative; }
+.portrait.ready img.age-layer { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease; }
+.portrait.ready img.age-layer.on { opacity: 1; }
+.portrait.ready img.age-layer.cut { transition: none; }
+.age-badge { position: absolute; left: .65rem; bottom: .65rem; padding: .22rem .6rem; border-radius: 99px; background: rgba(20, 28, 31, .72); color: var(--table-ink); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0; transition: opacity .3s ease; pointer-events: none; }
+.hero-card.aging .age-badge { opacity: 1; }
 .portrait.gone { background: radial-gradient(ellipse 15% 12% at 50% 52%, var(--silhouette) 0 96%, transparent 100%), radial-gradient(ellipse 38% 26% at 50% 100%, var(--silhouette) 0 97%, transparent 100%), linear-gradient(160deg, var(--card-2), var(--table-dim)); }
 .hero-name { padding: .8rem .9rem 0; font-family: var(--font-display); font-weight: 650; font-size: 1.2rem; line-height: 1.15; letter-spacing: -.02em; overflow-wrap: anywhere; }
 .hero-sub { padding: .25rem .9rem 0; font-size: .9rem; line-height: 1.38; color: var(--ink-dim); }
@@ -331,6 +356,45 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 @media (min-width: 40rem) { .type-sum { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; } }
 @media (min-width: 48rem) { .legendary-in { padding: 2rem 2.1rem 2.1rem; } .type-grid { grid-template-columns: 1fr 1fr; gap: 2rem; } }
 
+/* под картой типа: поделиться картинкой */
+.share { display: flex; flex-direction: column; align-items: center; gap: .6rem; margin-top: -.4rem; }
+.share-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; }
+.btn-soft { font: inherit; font-weight: 600; font-size: .98rem; color: var(--table-ink); background: var(--table-deep); border: 1px solid var(--table-line); border-radius: 12px; padding: .65rem 1.15rem; cursor: pointer; transition: border-color .15s ease, color .15s ease; }
+@media (hover: hover) { .btn-soft:hover { border-color: var(--accent); color: var(--accent-hi); } }
+.btn-soft:active { transform: translateY(1px); }
+.share-note { margin: 0; font-size: .88rem; color: var(--table-dim); text-align: center; }
+.share-note:empty { display: none; }
+.share-preview { margin: .3rem 0 0; display: flex; flex-direction: column; align-items: center; gap: .55rem; animation: deal .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+.share-preview img { display: block; width: min(19rem, 100%); height: auto; border-radius: 14px; box-shadow: var(--lift); }
+.share-preview figcaption { max-width: 24rem; text-align: center; font-size: .85rem; line-height: 1.45; color: var(--table-dim); }
+
+/* альбом жизни: шестнадцать сыгранных карт */
+.album-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+.album-card { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 0; border: 0; border-radius: 12px; overflow: hidden; text-align: left; font: inherit; color: var(--ink); background: var(--card); box-shadow: var(--lift); cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease; }
+@media (hover: hover) { .album-card:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .12), 0 16px 30px var(--shade); } }
+.album-card .art-mark .ico { width: 2rem; height: 2rem; }
+.album-body { display: flex; flex-direction: column; gap: .15rem; padding: .5rem .65rem .7rem; min-width: 0; }
+.album-age { display: inline-flex; align-items: center; gap: .3rem; font-size: .78rem; font-weight: 600; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.album-age .ico { width: 1em; height: 1em; color: var(--sp); }
+.album-title { font-size: .92rem; font-weight: 600; line-height: 1.28; letter-spacing: -.005em; overflow-wrap: anywhere; }
+@media (min-width: 40rem) { .album-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; } }
+
+/* воспоминание: карта альбома целиком поверх стола */
+html:has(dialog.memory[open]) { overflow: hidden; }
+dialog.memory { width: min(44rem, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); margin: auto; padding: 0; border: 0; border-radius: var(--r-card); background: transparent; color: var(--ink); overflow: auto; overscroll-behavior: contain; }
+dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
+.memory[open] .memory-card { animation: deal .32s cubic-bezier(.2, .8, .2, 1) backwards; }
+.memory-card { position: relative; }
+.memory-x { position: absolute; top: .6rem; right: .6rem; z-index: 2; width: 2.6rem; height: 2.6rem; display: grid; place-items: center; padding: 0 0 .15rem; border: 0; border-radius: 50%; background: rgba(20, 28, 31, .66); color: var(--table-ink); font: inherit; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.deed p { margin: 0; font-size: 1.08rem; font-weight: 600; line-height: 1.45; }
+.memory-nav { display: flex; gap: .6rem; padding: 0 1.15rem 1.25rem; }
+.nav-btn { flex: 1; font: inherit; font-weight: 600; font-size: .96rem; color: var(--ink); background: var(--card-2); border: 0; border-radius: 12px; padding: .75rem 1rem; cursor: pointer; }
+.nav-btn[disabled] { opacity: .4; cursor: default; }
+@media (hover: hover) { .nav-btn:not([disabled]):hover { background: var(--card-3); } }
+.memory-x:focus-visible, .nav-btn:focus-visible, .btn-soft:focus-visible, .album-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+@media (min-width: 64rem) { .memory-nav { padding: 0 1.6rem 1.6rem; } }
+
 /* отладка */
 .debug { margin-top: 2.5rem; padding: 1rem; border-radius: var(--r-small); background: var(--card); color: var(--ink); font-size: .85rem; }
 .debug h3 { margin: 0 0 .5rem; font-size: 1rem; }
@@ -342,10 +406,40 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 @keyframes flip { from { opacity: 0; transform: perspective(1100px) rotateY(-30deg); } }
 @keyframes fan { from { transform: rotate(0deg) translateY(12px); } }
 @keyframes shine { to { transform: translateX(110%); } }
+@keyframes ring { from { --p: var(--p0); } }
+@keyframes bump { 45% { transform: scale(1.16); border-color: var(--accent); color: var(--accent); } }
+@keyframes drift { from { transform: scale(1); } to { transform: scale(1.07); } }
+@keyframes line-turn { from { transform: scaleX(.15); opacity: 0; } 60% { opacity: 1; } }
 .deal { animation: deal .4s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 60ms); }
 .flip { animation: flip .5s cubic-bezier(.2, .8, .2, 1) backwards; }
+/* картинка сцены очень медленно приближается, как будто смотришь внимательнее */
+.scene-card .art.ready img, .finale .art.ready img, .memory-card .art.ready img { transform-origin: 50% 42%; animation: drift 30s cubic-bezier(.3, .2, .4, 1) both; }
+/* в итоге поступка перевёрнутая черта гексаграммы ложится на место */
+.result-band .hex .hl { transform-box: fill-box; transform-origin: center; animation: line-turn .7s .55s cubic-bezier(.2, .8, .2, 1) backwards; }
+
+/* смена экранов (View Transitions): экран мягко сменяется, сыгранная карта переворачивается и становится итогом,
+   следующая карта вырастает в сцену, лицо в табло взрослеет постепенно */
+::view-transition-old(root) { animation: vt-out .24s ease both; }
+::view-transition-new(root) { animation: vt-rise .42s cubic-bezier(.2, .8, .2, 1) both; }
+::view-transition-group(played) { animation-duration: .66s; animation-timing-function: cubic-bezier(.32, .72, .2, 1); }
+::view-transition-image-pair(played) { perspective: 1800px; }
+::view-transition-old(played) { animation: vt-turn-away .33s cubic-bezier(.55, 0, .85, .45) both; backface-visibility: hidden; mix-blend-mode: normal; }
+::view-transition-new(played) { animation: vt-turn-up .35s .31s cubic-bezier(.15, .55, .45, 1) both; backface-visibility: hidden; mix-blend-mode: normal; }
+::view-transition-group(next) { animation-duration: .6s; animation-timing-function: cubic-bezier(.3, .75, .25, 1); border-radius: var(--r-card) var(--r-card) 0 0; overflow: hidden; }
+::view-transition-old(next), ::view-transition-new(next) { height: 100%; object-fit: cover; }
+::view-transition-old(next) { animation: vt-out .45s ease both; }
+::view-transition-new(next) { animation: vt-in .3s ease both; }
+::view-transition-group(face) { animation-duration: .9s; animation-timing-function: cubic-bezier(.3, .7, .2, 1); }
+::view-transition-old(face) { animation: vt-out .9s ease both; }
+::view-transition-new(face) { animation: vt-in .9s ease both; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; } }
+@keyframes vt-rise { from { opacity: 0; transform: translateY(12px); } }
+@keyframes vt-turn-away { to { transform: rotateY(90deg); } }
+@keyframes vt-turn-up { from { transform: rotateY(-90deg); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
 </style>
 <header class="hud" id="hud" hidden></header>

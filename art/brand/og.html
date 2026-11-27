@@ -1,0 +1,46 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400..700&display=swap">
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+body { position: relative; background: #1a2427; color: #e9edeb; font-family: Onest, sans-serif; }
+body::after { content: ""; position: absolute; inset: 0; background: radial-gradient(90% 75% at 72% 40%, #2a3a3f, transparent 70%); z-index: 0; }
+.text { position: absolute; left: 76px; top: 0; bottom: 0; width: 520px; display: flex; flex-direction: column; justify-content: center; gap: 22px; z-index: 2; }
+.eyebrow { font-size: 26px; font-weight: 600; color: #e0b25e; letter-spacing: .01em; }
+h1 { margin: 0; font-size: 104px; line-height: .94; font-weight: 700; letter-spacing: -.045em; }
+.lede { margin: 0; font-size: 28px; line-height: 1.42; color: #b5c2c0; }
+.suits { display: flex; gap: 10px; margin-top: 6px; }
+.suit { display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px 7px 12px; border-radius: 99px; border: 1.5px solid #2f3d41; font-size: 21px; font-weight: 600; }
+.suit svg { width: 22px; height: 22px; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.fan { position: absolute; right: 30px; top: 50%; width: 600px; height: 560px; transform: translateY(-50%); z-index: 1; }
+.c { position: absolute; left: 50%; top: 50%; width: 320px; margin-left: -160px; margin-top: -196px; background: #f7f3ec; color: #23282a; border-radius: 22px; overflow: hidden;
+  box-shadow: 0 2px 0 rgba(0,0,0,.15), 0 26px 50px rgba(5,10,12,.55); transform-origin: 50% 210%; }
+.c img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
+.c .b { padding: 14px 18px 20px; }
+.c .b.blank { height: 108px; }
+.c .m { display: flex; align-items: center; gap: 7px; font-size: 17px; font-weight: 600; color: #5f6769; }
+.c .m svg { width: 18px; height: 18px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.c .t { margin-top: 6px; font-size: 28px; font-weight: 650; letter-spacing: -.02em; line-height: 1.1; }
+.c .a { margin-top: 6px; font-size: 17px; color: #5f6769; }
+.c1 { transform: translate(-6px, 34px) rotate(-14deg); }
+.c2 { transform: translate(6px, 8px) rotate(-2deg); }
+.c3 { transform: translate(18px, 22px) rotate(10deg); }
+.c.c3 { box-shadow: 0 0 0 3px #e0b25e, 0 26px 50px rgba(5,10,12,.55); }
+</style></head><body>
+<div class="text">
+  <div class="eyebrow">16 решений · от 6 до 84 лет</div>
+  <h1>Прожить жизнь</h1>
+  <p class="lede">Город на большой реке. В каждом возрасте четыре карты поступков, и каждая ведёт в свою сторону жизни.</p>
+  <div class="suits">
+    <span class="suit"><svg viewBox="0 0 24 24" stroke="#d4a681"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></svg>Дом</span>
+    <span class="suit"><svg viewBox="0 0 24 24" stroke="#8fbfb7"><path d="M12 3v18"/><path d="M12 5h6.5l2 2.25-2 2.25H12"/><path d="M12 12H5.5l-2 2.25 2 2.25H12"/></svg>Дорога</span>
+    <span class="suit"><svg viewBox="0 0 24 24" stroke="#a7b6d6"><path d="M4 8h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><path d="M9 8V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V8"/><path d="M3 13.5h18"/></svg>Дело</span>
+    <span class="suit"><svg viewBox="0 0 24 24" stroke="#d3a1b3"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z"/></svg>Близкие</span>
+  </div>
+</div>
+<div class="fan">
+  <div class="c c1"><img src="../../dist/img/v5-M1-1.jpg"><div class="b blank"></div></div>
+  <div class="c c2"><img src="../../dist/img/v5-F1-3.jpg"><div class="b blank"></div></div>
+  <div class="c c3"><img src="../../dist/img/v5-M1-2.jpg"><div class="b"><div class="m"><svg viewBox="0 0 24 24" stroke="#5a72a0"><path d="M4 8h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><path d="M9 8V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V8"/><path d="M3 13.5h18"/></svg>Дело</div><div class="t">Кораблик</div><div class="a">Его жизнь · 6 лет</div></div></div>
+</div>
+</body></html>

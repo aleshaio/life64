@@ -49,8 +49,9 @@
 .sp3 { --sp: var(--close); --sp-hi: var(--close-hi); }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; min-height: 100vh; background: var(--table); color: var(--table-ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+html { -webkit-text-size-adjust: 100%; background: var(--table); }
+/* сверху отступ под строку состояния телефона (у игры с экрана «Домой» она поверх страницы) */
+body { margin: 0; min-height: 100vh; padding-top: env(safe-area-inset-top, 0px); background: var(--table); color: var(--table-ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
 p, li { text-wrap: pretty; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--table); }
@@ -69,10 +70,15 @@ button { -webkit-tap-highlight-color: transparent; }
 .hexno { font-size: .78rem; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
 
 /* табло: лицо героя в нужном возрасте, возраст, сколько карт каждой стороны сыграно, полоса жизни */
-.hud { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8; background: var(--table); border-bottom: 1px solid var(--table-line); box-shadow: 0 6px 18px var(--shade); }
+.hud { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8; background: var(--table); border-bottom: 1px solid var(--table-line); box-shadow: 0 6px 18px var(--shade); view-transition-name: hud; }
 .hud-in { display: flex; align-items: center; gap: .7rem; padding-block: .55rem .45rem; }
-.avatar { --p: 0; width: 2.9rem; height: 2.9rem; flex: none; border-radius: 50%; padding: 2px; background: conic-gradient(var(--accent) calc(var(--p) * 1turn), var(--table-line) 0); }
-.avatar .face { width: 100%; height: 100%; margin: 0; border-radius: 50%; overflow: hidden; background: var(--table-deep); border: 2px solid var(--table); }
+/* кольцо прожитой жизни дорастает от прошлого значения (--p0) до нового (--p) */
+@property --p { syntax: '<number>'; inherits: false; initial-value: 0; }
+.avatar { --p: 0; width: 2.9rem; height: 2.9rem; flex: none; border-radius: 50%; padding: 2px; background: conic-gradient(var(--accent) calc(var(--p) * 1turn), var(--table-line) 0);
+  animation: ring .9s .2s cubic-bezier(.2, .8, .2, 1) backwards; }
+.avatar .face { width: 100%; height: 100%; margin: 0; border-radius: 50%; overflow: hidden; background: var(--table-deep); border: 2px solid var(--table); view-transition-name: face; }
+.age-big { view-transition-name: hud-age; }
+.suit-count.bump { animation: bump .6s .35s cubic-bezier(.2, .8, .2, 1) backwards; }
 .face img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .face.gone img { display: none; }
 .face.gone { background: radial-gradient(ellipse 22% 22% at 50% 44%, var(--silhouette-hi) 0 96%, transparent 100%), radial-gradient(ellipse 40% 30% at 50% 104%, var(--silhouette-hi) 0 97%, transparent 100%), var(--table-deep); }
@@ -115,7 +121,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .card-body { padding: 1.05rem 1.15rem 1.3rem; display: flex; flex-direction: column; gap: .8rem; min-width: 0; }
 .card-meta { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: .3rem .55rem; font-size: .85rem; color: var(--ink-dim); }
 .card-meta .suit::after { content: "·"; margin-left: .25rem; color: var(--card-3); }
-.art { position: relative; margin: 0; aspect-ratio: 3 / 2; max-width: 100%; background: linear-gradient(160deg, var(--card-2), var(--card-3)); }
+.art { position: relative; margin: 0; aspect-ratio: 3 / 2; max-width: 100%; overflow: hidden; background: linear-gradient(160deg, var(--card-2), var(--card-3)); }
 .art img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .5s ease; }
 .art.ready img { opacity: 1; }
 .art.gone img { display: none; }
@@ -193,7 +199,19 @@ button { -webkit-tap-highlight-color: transparent; }
 .tokens li { display: flex; align-items: center; gap: .6rem; font-size: .96rem; line-height: 1.35; }
 .fork-row { display: grid; gap: .8rem; }
 .mini { min-width: 0; border-radius: 14px; padding: .85rem .95rem; display: flex; flex-direction: column; gap: .3rem; }
-.mini.open { background: var(--card); color: var(--ink); box-shadow: 0 0 0 2px var(--accent), var(--lift); }
+.mini.open { padding: 0; gap: 0; overflow: hidden; background: var(--card); color: var(--ink); box-shadow: 0 0 0 2px var(--accent), var(--lift); }
+.mini-art { aspect-ratio: 2 / 1; }
+.mini-body { display: flex; flex-direction: column; gap: .3rem; padding: .75rem .95rem .9rem; min-width: 0; }
+/* следующая карта: заголовок, а если впереди новый возраст — как изменится лицо */
+.fork-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: .7rem; }
+.fork-head .table-title { margin: 0; }
+.grow { display: flex; align-items: flex-start; gap: .45rem; }
+.grow-face { margin: 0; display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+.grow-face .face { width: 2.7rem; height: 2.7rem; margin: 0; border-radius: 50%; overflow: hidden; background: var(--table-deep); border: 2px solid var(--table-line); }
+.grow-face:last-child .face { border-color: var(--accent); }
+.grow-face figcaption { font-size: .72rem; line-height: 1.2; color: var(--table-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.grow-face:last-child figcaption { color: var(--accent); font-weight: 600; }
+.grow-arrow { align-self: center; margin-top: -1rem; color: var(--table-mid); }
 .mini.closed { flex-direction: row; align-items: baseline; gap: .7rem; padding: .55rem .8rem; color: var(--table-dim); border: 1px dashed var(--table-line); }
 .mini-suit { display: inline-flex; align-items: center; gap: .3rem; font-size: .84rem; font-weight: 600; color: var(--ink-dim); }
 .mini-suit .ico { color: var(--sp); }
@@ -242,6 +260,13 @@ button { -webkit-tap-highlight-color: transparent; }
 .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .5s ease; }
 .portrait.ready img { opacity: 1; }
 .portrait.gone img { display: none; }
+/* на старте при наведении лицо взрослеет: слои старших возрастов поверх и подпись возраста */
+.hero-card .portrait { position: relative; }
+.portrait.ready img.age-layer { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease; }
+.portrait.ready img.age-layer.on { opacity: 1; }
+.portrait.ready img.age-layer.cut { transition: none; }
+.age-badge { position: absolute; left: .65rem; bottom: .65rem; padding: .22rem .6rem; border-radius: 99px; background: rgba(20, 28, 31, .72); color: var(--table-ink); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0; transition: opacity .3s ease; pointer-events: none; }
+.hero-card.aging .age-badge { opacity: 1; }
 .portrait.gone { background: radial-gradient(ellipse 15% 12% at 50% 52%, var(--silhouette) 0 96%, transparent 100%), radial-gradient(ellipse 38% 26% at 50% 100%, var(--silhouette) 0 97%, transparent 100%), linear-gradient(160deg, var(--card-2), var(--table-dim)); }
 .hero-name { padding: .8rem .9rem 0; font-family: var(--font-display); font-weight: 650; font-size: 1.2rem; line-height: 1.15; letter-spacing: -.02em; overflow-wrap: anywhere; }
 .hero-sub { padding: .25rem .9rem 0; font-size: .9rem; line-height: 1.38; color: var(--ink-dim); }
@@ -331,6 +356,45 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 @media (min-width: 40rem) { .type-sum { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; } }
 @media (min-width: 48rem) { .legendary-in { padding: 2rem 2.1rem 2.1rem; } .type-grid { grid-template-columns: 1fr 1fr; gap: 2rem; } }
 
+/* под картой типа: поделиться картинкой */
+.share { display: flex; flex-direction: column; align-items: center; gap: .6rem; margin-top: -.4rem; }
+.share-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; }
+.btn-soft { font: inherit; font-weight: 600; font-size: .98rem; color: var(--table-ink); background: var(--table-deep); border: 1px solid var(--table-line); border-radius: 12px; padding: .65rem 1.15rem; cursor: pointer; transition: border-color .15s ease, color .15s ease; }
+@media (hover: hover) { .btn-soft:hover { border-color: var(--accent); color: var(--accent-hi); } }
+.btn-soft:active { transform: translateY(1px); }
+.share-note { margin: 0; font-size: .88rem; color: var(--table-dim); text-align: center; }
+.share-note:empty { display: none; }
+.share-preview { margin: .3rem 0 0; display: flex; flex-direction: column; align-items: center; gap: .55rem; animation: deal .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+.share-preview img { display: block; width: min(19rem, 100%); height: auto; border-radius: 14px; box-shadow: var(--lift); }
+.share-preview figcaption { max-width: 24rem; text-align: center; font-size: .85rem; line-height: 1.45; color: var(--table-dim); }
+
+/* альбом жизни: шестнадцать сыгранных карт */
+.album-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+.album-card { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 0; border: 0; border-radius: 12px; overflow: hidden; text-align: left; font: inherit; color: var(--ink); background: var(--card); box-shadow: var(--lift); cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease; }
+@media (hover: hover) { .album-card:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .12), 0 16px 30px var(--shade); } }
+.album-card .art-mark .ico { width: 2rem; height: 2rem; }
+.album-body { display: flex; flex-direction: column; gap: .15rem; padding: .5rem .65rem .7rem; min-width: 0; }
+.album-age { display: inline-flex; align-items: center; gap: .3rem; font-size: .78rem; font-weight: 600; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.album-age .ico { width: 1em; height: 1em; color: var(--sp); }
+.album-title { font-size: .92rem; font-weight: 600; line-height: 1.28; letter-spacing: -.005em; overflow-wrap: anywhere; }
+@media (min-width: 40rem) { .album-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; } }
+
+/* воспоминание: карта альбома целиком поверх стола */
+html:has(dialog.memory[open]) { overflow: hidden; }
+dialog.memory { width: min(44rem, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); margin: auto; padding: 0; border: 0; border-radius: var(--r-card); background: transparent; color: var(--ink); overflow: auto; overscroll-behavior: contain; }
+dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
+.memory[open] .memory-card { animation: deal .32s cubic-bezier(.2, .8, .2, 1) backwards; }
+.memory-card { position: relative; }
+.memory-x { position: absolute; top: .6rem; right: .6rem; z-index: 2; width: 2.6rem; height: 2.6rem; display: grid; place-items: center; padding: 0 0 .15rem; border: 0; border-radius: 50%; background: rgba(20, 28, 31, .66); color: var(--table-ink); font: inherit; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.deed p { margin: 0; font-size: 1.08rem; font-weight: 600; line-height: 1.45; }
+.memory-nav { display: flex; gap: .6rem; padding: 0 1.15rem 1.25rem; }
+.nav-btn { flex: 1; font: inherit; font-weight: 600; font-size: .96rem; color: var(--ink); background: var(--card-2); border: 0; border-radius: 12px; padding: .75rem 1rem; cursor: pointer; }
+.nav-btn[disabled] { opacity: .4; cursor: default; }
+@media (hover: hover) { .nav-btn:not([disabled]):hover { background: var(--card-3); } }
+.memory-x:focus-visible, .nav-btn:focus-visible, .btn-soft:focus-visible, .album-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+@media (min-width: 64rem) { .memory-nav { padding: 0 1.6rem 1.6rem; } }
+
 /* отладка */
 .debug { margin-top: 2.5rem; padding: 1rem; border-radius: var(--r-small); background: var(--card); color: var(--ink); font-size: .85rem; }
 .debug h3 { margin: 0 0 .5rem; font-size: 1rem; }
@@ -342,10 +406,40 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 @keyframes flip { from { opacity: 0; transform: perspective(1100px) rotateY(-30deg); } }
 @keyframes fan { from { transform: rotate(0deg) translateY(12px); } }
 @keyframes shine { to { transform: translateX(110%); } }
+@keyframes ring { from { --p: var(--p0); } }
+@keyframes bump { 45% { transform: scale(1.16); border-color: var(--accent); color: var(--accent); } }
+@keyframes drift { from { transform: scale(1); } to { transform: scale(1.07); } }
+@keyframes line-turn { from { transform: scaleX(.15); opacity: 0; } 60% { opacity: 1; } }
 .deal { animation: deal .4s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 60ms); }
 .flip { animation: flip .5s cubic-bezier(.2, .8, .2, 1) backwards; }
+/* картинка сцены очень медленно приближается, как будто смотришь внимательнее */
+.scene-card .art.ready img, .finale .art.ready img, .memory-card .art.ready img { transform-origin: 50% 42%; animation: drift 30s cubic-bezier(.3, .2, .4, 1) both; }
+/* в итоге поступка перевёрнутая черта гексаграммы ложится на место */
+.result-band .hex .hl { transform-box: fill-box; transform-origin: center; animation: line-turn .7s .55s cubic-bezier(.2, .8, .2, 1) backwards; }
+
+/* смена экранов (View Transitions): экран мягко сменяется, сыгранная карта переворачивается и становится итогом,
+   следующая карта вырастает в сцену, лицо в табло взрослеет постепенно */
+::view-transition-old(root) { animation: vt-out .24s ease both; }
+::view-transition-new(root) { animation: vt-rise .42s cubic-bezier(.2, .8, .2, 1) both; }
+::view-transition-group(played) { animation-duration: .66s; animation-timing-function: cubic-bezier(.32, .72, .2, 1); }
+::view-transition-image-pair(played) { perspective: 1800px; }
+::view-transition-old(played) { animation: vt-turn-away .33s cubic-bezier(.55, 0, .85, .45) both; backface-visibility: hidden; mix-blend-mode: normal; }
+::view-transition-new(played) { animation: vt-turn-up .35s .31s cubic-bezier(.15, .55, .45, 1) both; backface-visibility: hidden; mix-blend-mode: normal; }
+::view-transition-group(next) { animation-duration: .6s; animation-timing-function: cubic-bezier(.3, .75, .25, 1); border-radius: var(--r-card) var(--r-card) 0 0; overflow: hidden; }
+::view-transition-old(next), ::view-transition-new(next) { height: 100%; object-fit: cover; }
+::view-transition-old(next) { animation: vt-out .45s ease both; }
+::view-transition-new(next) { animation: vt-in .3s ease both; }
+::view-transition-group(face) { animation-duration: .9s; animation-timing-function: cubic-bezier(.3, .7, .2, 1); }
+::view-transition-old(face) { animation: vt-out .9s ease both; }
+::view-transition-new(face) { animation: vt-in .9s ease both; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; } }
+@keyframes vt-rise { from { opacity: 0; transform: translateY(12px); } }
+@keyframes vt-turn-away { to { transform: rotateY(90deg); } }
+@keyframes vt-turn-up { from { transform: rotateY(-90deg); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
 </style>
 <header class="hud" id="hud" hidden></header>
@@ -4956,11 +5050,13 @@ function pathStrip() {
     el('p', { class: 'path-note' }, caption));
 }
 
-/** Иллюстрация: сначала локальная копия img/, затем оригинал; если ничего не загрузилось, остаётся заглушка. */
-function picture(src, alt, cls) {
+/** Иллюстрация: сначала локальная копия img/, затем оригинал; если ничего не загрузилось, остаётся заглушка.
+ *  eager — грузить сразу (следующая карта, воспоминание), а не когда до картинки дойдёт прокрутка. */
+function picture(src, alt, cls, eager = false) {
   if (!src) return null;
-  const img = el('img', { src: src.local, alt, loading: 'lazy', decoding: 'async' });
+  const img = el('img', { src: src.local, alt, loading: eager ? 'eager' : 'lazy', decoding: 'async' });
   const fig = el('figure', { class: cls }, img);
+  if (img.complete && img.naturalWidth) fig.classList.add('ready'); // уже в кэше: без мигания
   let tried = 0;
   img.addEventListener('error', () => {
     tried++;
@@ -4971,11 +5067,31 @@ function picture(src, alt, cls) {
   return fig;
 }
 /** Картинка сцены на карте: пока грузится или если её нет, видна заливка масти со значком. */
-function art(src, alt, sp) {
-  const fig = picture(src, alt, `art sp${sp}`) || el('figure', { class: `art sp${sp}` });
+function art(src, alt, sp, { cls = '', eager = false } = {}) {
+  const c = `art sp${sp}${cls ? ` ${cls}` : ''}`;
+  const fig = picture(src, alt, c, eager) || el('figure', { class: c });
   fig.append(el('span', { class: 'art-mark' }, icon(sp)));
   return fig;
 }
+
+// Смена экранов. Где браузер умеет View Transitions, выбранная карта переворачивается и становится итогом,
+// следующая карта вырастает в сцену, а лицо в табло взрослеет плавно. Без них или при «меньше движения» всё как раньше.
+const canMorph = () => !calm() && typeof document.startViewTransition === 'function';
+let morph = null; // какая карта сейчас перелетает в новый экран: 'played' (сыгранная) или 'next' (следующая)
+function swap(update, name = null) {
+  if (!canMorph()) { update(); return; }
+  morph = name;
+  const done = () => {
+    morph = null;
+    document.querySelectorAll('[data-vt]').forEach((n) => { n.style.removeProperty('view-transition-name'); n.removeAttribute('data-vt'); });
+  };
+  let t;
+  try { t = document.startViewTransition(update); } catch { done(); update(); return; }
+  t.finished.then(done, done);
+}
+/** Имя для перелёта: у старого элемента ставится перед сменой экрана, у нового — при отрисовке. */
+const fly = (node, name) => { node.style.setProperty('view-transition-name', name); node.setAttribute('data-vt', ''); return node; };
+const buzz = () => { try { if (navigator.vibrate) navigator.vibrate(8); } catch { /* ignore */ } };
 
 function persist() { if (LS && state) storage.save(LS, state); }
 
@@ -4993,23 +5109,28 @@ const scenesWord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'сцена' : n % 1
 const faceAge = (age) => (age <= 6 ? 6 : age <= 14 ? 12 : age <= 23 ? 20 : age <= 39 ? 35 : age <= 59 ? 52 : 75);
 
 /** Табло сверху: лицо героя в этом возрасте, кольцо прожитой жизни, масти прожитых сцен, полоса из 16 возрастов. */
+let hudWas = null;
 function renderHud() {
   hud.hidden = !state;
-  if (!state) { hud.replaceChildren(); return; }
+  if (!state) { hud.replaceChildren(); hudWas = null; return; }
   const pend = pendingResult(state);
   const over = isOver(state) && !pend;
   const ep = pend ? pend.episode : over ? TOTAL_EPISODES : state.episode;
   const age = ageOf(ep);
   const counts = [0, 0, 0, 0];
   for (const j of state.journal) counts[j.toSphere ?? j.sphere]++;
+  // кольцо прожитой жизни дорастает от прошлого значения, счётчик сыгранной масти чуть подпрыгивает
+  const p = state.journal.length / TOTAL_EPISODES;
+  const was = hudWas && hudWas.sex === state.sex ? hudWas : { p, counts };
+  hudWas = { sex: state.sex, p, counts };
   hud.replaceChildren(el('div', { class: 'wrap' },
     el('div', { class: 'hud-in' },
-      el('div', { class: 'avatar', style: `--p:${state.journal.length / TOTAL_EPISODES}` }, picture(ageFor(state.sex, faceAge(age)), '', 'face')),
+      el('div', { class: 'avatar', style: `--p:${p};--p0:${Math.min(was.p, p)}` }, picture(ageFor(state.sex, faceAge(age)), '', 'face', true)),
       el('div', { class: 'hud-age' },
         el('span', { class: 'age-big' }, `${age} ${yearsWord(age)}`),
         el('span', { class: 'hud-step' }, over ? 'жизнь прожита' : `решение ${ep} из ${TOTAL_EPISODES}`)),
       el('ul', { class: 'suits', 'aria-label': 'Сколько карт каждой масти сыграно' },
-        SUITS.map((s, i) => el('li', { class: `suit-count sp${i}`, title: `${s.name}: ${counts[i]}` }, icon(i), el('b', {}, String(counts[i])))))),
+        SUITS.map((s, i) => el('li', { class: `suit-count sp${i}${counts[i] > was.counts[i] ? ' bump' : ''}`, title: `${s.name}: ${counts[i]}` }, icon(i), el('b', {}, String(counts[i])))))),
     el('ol', { class: 'track', 'aria-label': 'Возрасты жизни' }, AGES.map((a, i) => {
       const j = state.journal[i];
       const now = !over && i + 1 === ep && !j;
@@ -5035,13 +5156,15 @@ function renderStart() {
   const hero = (sex, label, sub) => {
     const n = seenCount(sex);
     const total = sceneMap(sex).reduce((k, r) => k + r.scenes.filter(Boolean).length, 0);
-    return el('button', { class: 'hero-card deal', id: `start-${sex.toLowerCase()}`, style: `--i:${sex === 'M' ? 1 : 2}`, onclick: () => start(sex) },
-      picture(portraitFor(sex), label, 'portrait'),
+    const card = el('button', { class: 'hero-card deal', id: `start-${sex.toLowerCase()}`, style: `--i:${sex === 'M' ? 1 : 2}`, onclick: (e) => start(sex, e.currentTarget) },
+      picture(portraitFor(sex), label, 'portrait', true),
       el('span', { class: 'hero-name' }, label),
       el('span', { class: 'hero-sub' }, sub),
       el('span', { class: 'meter', 'aria-hidden': 'true' }, el('i', { style: `width:${Math.round((Math.min(n, total) / total) * 100)}%` })),
       el('span', { class: 'hero-progress' }, n ? `Открыто сцен: ${Math.min(n, total)} из ${total}` : `В жизни ${total} ${scenesWord(total)}, за одну увидишь 16`),
       el('span', { class: 'hero-go' }, 'Начать'));
+    ageCycle(card, sex);
+    return card;
   };
   root.append(el('section', { class: 'start' },
     el('div', { class: 'deck', 'aria-hidden': 'true' }, SUITS.map((s, i) => el('span', { class: `dc sp${i}` }, icon(i)))),
@@ -5050,13 +5173,49 @@ function renderStart() {
     el('p', { class: 'lede' }, 'Город на большой реке, шестнадцать возрастов. В каждом тебе сдают сцену и четыре карты поступков, и каждая ведёт в свою сторону жизни. Люди запомнят твои поступки, а в конце станет ясно, каким человеком была прожита эта жизнь.'),
     el('ul', { class: 'suit-legend', 'aria-label': 'Четыре масти' }, SUITS.map((s, i) => el('li', {}, suitChip(i)))),
     hadBroken ? el('p', { class: 'warn' }, 'Прошлое сохранение повреждено и не может быть восстановлено. Можно начать новую жизнь.') : null,
-    saved ? el('div', { class: 'actions' }, el('button', { class: 'btn-go', id: 'continue', onclick: () => { state = saved; render(); } },
+    saved ? el('div', { class: 'actions' }, el('button', { class: 'btn-go', id: 'continue', onclick: () => swap(() => { state = saved; render(); window.scrollTo(0, 0); }) },
       isOver(saved) ? 'Вернуться к концу жизни' : `Продолжить · ${ageText(ageOf(saved.episode))}`)) : null,
     el('h2', { class: 'pick-title' }, saved ? 'Или начать новую жизнь' : 'Чью жизнь прожить'),
     el('div', { class: 'hero-row' },
       hero('M', 'Его жизнь', 'Мальчик из Заречья: гаражи, река, моторы'),
       hero('F', 'Её жизнь', 'Девочка из Слободы: брат, подруга, больница')),
   ));
+}
+
+/** На компьютере при наведении лицо на карте героя взрослеет: шесть возрастов по кругу. Слои старших лиц грузятся при первом наведении. */
+function ageCycle(card, sex) {
+  const fig = card.querySelector('.portrait');
+  try { if (!fig || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return; } catch { return; }
+  const label = (a) => `${a} ${yearsWord(a)}`;
+  const badge = el('span', { class: 'age-badge', 'aria-hidden': 'true' }, label(PORTRAIT_AGES[0]));
+  fig.append(badge);
+  let layers = null, k = 0, timer = null;
+  const setAge = (to) => {
+    if (to > k) for (let i = 0; i < to; i++) layers[i].classList.add('on');
+    else if (to < k) {
+      // назад: нижние слои убираются сразу (под верхним их не видно), верхний гаснет плавно
+      const top = k - 1;
+      layers.forEach((im, i) => { if (i >= to && i !== top) { im.classList.add('cut'); im.classList.remove('on'); } });
+      layers[top].classList.remove('on');
+      requestAnimationFrame(() => requestAnimationFrame(() => layers.forEach((im) => im.classList.remove('cut'))));
+    }
+    k = to;
+    // подпись меняется, когда новое лицо уже наполовину проявилось
+    clearTimeout(badge.t);
+    badge.t = setTimeout(() => { badge.textContent = label(PORTRAIT_AGES[k]); }, 350);
+  };
+  card.addEventListener('mouseenter', () => {
+    if (calm()) return;
+    if (!layers) layers = PORTRAIT_AGES.slice(1).map((a) => fig.insertBefore(el('img', { class: 'age-layer', src: ageFor(sex, a).local, alt: '', decoding: 'async' }), badge));
+    card.classList.add('aging');
+    clearInterval(timer);
+    timer = setInterval(() => setAge((k + 1) % PORTRAIT_AGES.length), 1100);
+  });
+  card.addEventListener('mouseleave', () => {
+    clearInterval(timer);
+    card.classList.remove('aging');
+    if (layers) setAge(0);
+  });
 }
 
 /** Старт в случайной стороне жизни; сначала те первые сцены, которых игрок ещё не видел. Номер старта = номер сферы. */
@@ -5068,17 +5227,22 @@ function pickStart(sex) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function start(sex) {
-  state = newGame(sex, pickStart(sex));
-  persist();
-  render();
-  window.scrollTo(0, 0);
+/** Начать жизнь. Портрет с карты героя улетает в табло: этот ребёнок теперь ты. */
+function start(sex, card) {
+  const face = card && card.querySelector('.portrait.ready');
+  if (face && canMorph()) fly(face, 'face');
+  swap(() => {
+    state = newGame(sex, pickStart(sex));
+    persist();
+    render();
+    window.scrollTo(0, 0);
+  });
 }
 
 function restartControl() {
   if (!confirmRestart) return el('button', { class: 'link', id: 'restart', onclick: () => { confirmRestart = true; render(); } }, 'Начать заново');
   return el('span', { class: 'confirm' }, 'Стереть эту жизнь? ',
-    el('button', { class: 'link danger', id: 'restart-yes', onclick: () => { confirmRestart = false; if (LS) storage.clear(LS); state = null; render(); } }, 'Да'),
+    el('button', { class: 'link danger', id: 'restart-yes', onclick: () => swap(() => { confirmRestart = false; if (LS) storage.clear(LS); state = null; render(); window.scrollTo(0, 0); }) }, 'Да'),
     ' · ',
     el('button', { class: 'link', id: 'restart-no', onclick: () => { confirmRestart = false; render(); } }, 'Нет'));
 }
@@ -5106,6 +5270,7 @@ function renderScene() {
   const choose = (id, card) => {
     if (busy) return;
     busy = true;
+    buzz();
     const go = () => {
       try { state = applyChoice(state, id, debugOpts); persist(); } finally { busy = false; }
       render();
@@ -5113,12 +5278,18 @@ function renderScene() {
     };
     if (!card || calm()) return go();
     root.querySelectorAll('.choice').forEach((b) => b.classList.add(b === card ? 'picked' : 'dropped'));
-    setTimeout(go, 330);
+    // выбранная карта приподнимается, остальные уходят; потом она переворачивается и становится итогом
+    if (canMorph()) setTimeout(() => { fly(card, 'played'); swap(go, 'played'); }, 240);
+    else setTimeout(go, 330);
   };
+  // Если пришли кнопкой «Дальше», картинка следующей карты вырастает в картинку сцены.
+  const grown = morph === 'next';
+  const sceneArt = art(imageFor(sc.img), `${sc.title}, ${sc.ageText}`, sc.sphere, { eager: true });
+  if (grown) fly(sceneArt, 'next');
   root.append(el('article', { class: 'scene' },
     el('div', { class: 'board' },
-      el('section', { class: 'card scene-card deal' },
-        art(imageFor(sc.img), `${sc.title}, ${sc.ageText}`, sc.sphere),
+      el('section', { class: grown ? 'card scene-card' : 'card scene-card deal' },
+        sceneArt,
         el('div', { class: 'card-body' },
           el('p', { class: 'card-meta' }, suitChip(sc.sphere), `Тебе ${sc.ageText}`),
           el('h2', { class: 'scene-title' }, sc.title),
@@ -5151,13 +5322,33 @@ function renderScene() {
 function renderResult() {
   const j = pendingResult(state);
   const fork = forkOf(state, j);
-  const next = () => { state = acknowledge(state); persist(); render(); window.scrollTo(0, 0); };
+  const next = () => {
+    if (busy) return;
+    busy = true;
+    const go = () => {
+      try { state = acknowledge(state); persist(); } finally { busy = false; }
+      render();
+      window.scrollTo(0, 0);
+    };
+    const pic = root.querySelector('.mini.open .mini-art');
+    if (pic && canMorph()) fly(pic, 'next');
+    swap(go, pic ? 'next' : null);
+  };
   const rem = j.remembers || [];
   const sp = fork ? fork.sphere : j.sphere;
+  const played = morph === 'played'; // эта карта прилетела перевёрнутой с прошлого экрана
   const go = el('div', { class: 'go-bar' }, el('button', { class: 'btn-go', id: 'next', onclick: next },
     isOver(state) ? 'К концу жизни' : `Дальше · ${ageText(ageOf(state.episode))}`));
+  // Следующая карта уже с картинкой (она же грузится заранее), а если герой войдёт в новый возраст, видно, как изменится лицо.
+  const nextKey = fork ? `${state.sex}${j.episode + 1}-${fork.sphere}` : null;
+  const nowAge = ageOf(j.episode);
+  const growFace = (a) => el('figure', { class: 'grow-face' }, picture(ageFor(state.sex, faceAge(a)), '', 'face', true), el('figcaption', {}, `${a} ${yearsWord(a)}`));
+  const grow = fork && faceAge(fork.age) !== faceAge(nowAge)
+    ? el('div', { class: 'grow deal', style: '--i:2', role: 'img', 'aria-label': `Лицо повзрослеет: было ${ageText(nowAge)}, станет ${fork.ageText}` },
+      growFace(nowAge), el('span', { class: 'grow-arrow', 'aria-hidden': 'true' }, '→'), growFace(fork.age))
+    : null;
   root.append(el('article', { class: 'result' },
-    el('section', { class: `card result-card flip sp${sp}` },
+    el('section', { class: `card result-card${played ? '' : ' flip'} sp${sp}`, style: played ? 'view-transition-name:played' : false, 'data-vt': played },
       el('header', { class: 'result-band' },
         el('span', { class: 'turn-to' }, fork ? icon(sp) : null, fork ? turnText(j.sphere, fork.sphere, true) : 'Последняя карта сыграна'),
         el('span', { class: 'turn-hex', 'aria-label': `Гексаграмма №${j.fromHex} стала №${j.toHex}` },
@@ -5170,12 +5361,16 @@ function renderResult() {
         rem.length ? el('div', { class: 'remember' }, el('h3', { class: 'label' }, rem.length > 1 ? 'Это запомнят' : `${rem[0].name} это запомнит`),
           el('ul', { class: 'tokens' }, rem.map((r) => el('li', {}, el('span', { class: 'token', 'aria-hidden': 'true' }, r.name.charAt(0)), el('span', {}, el('b', {}, r.name), ` — ${r.status}`))))) : null)),
     fork ? el('section', { class: 'fork', 'aria-label': 'Следующая сцена' },
-      el('h3', { class: 'table-title' }, `Следующая карта · через ${fork.years} ${yearsWord(fork.years)}`),
+      el('div', { class: 'fork-head' },
+        el('h3', { class: 'table-title' }, `Следующая карта · через ${fork.years} ${yearsWord(fork.years)}`),
+        grow),
       el('div', { class: fork.closed.length ? 'fork-row' : 'fork-row solo' },
         el('div', { class: `mini open deal sp${fork.sphere}`, style: '--i:3' },
-          el('span', { class: 'mini-suit' }, icon(fork.sphere), SUITS[fork.sphere].name),
-          el('b', { class: 'mini-title' }, `«${fork.title}»`),
-          fork.hook ? el('p', { class: 'mini-hook' }, fork.hook) : null),
+          art(imageFor(nextKey), '', fork.sphere, { cls: 'mini-art', eager: true }),
+          el('div', { class: 'mini-body' },
+            el('span', { class: 'mini-suit' }, icon(fork.sphere), SUITS[fork.sphere].name),
+            el('b', { class: 'mini-title' }, `«${fork.title}»`),
+            fork.hook ? el('p', { class: 'mini-hook' }, fork.hook) : null)),
         fork.closed.length ? el('div', { class: 'closed-stack' },
           el('p', { class: 'closed-note' }, fork.closed.length > 1 ? 'Другие дороги закрылись' : 'Другая дорога закрылась'),
           el('ul', { class: 'closed-list' }, fork.closed.map((c, i) => el('li', { class: `mini closed deal sp${c.sphere}`, style: `--i:${i + 4}` },
@@ -5232,12 +5427,279 @@ function bars(shares, order, names, hints, lead) {
     el('span', { class: 'bar-track' }, el('span', { class: 'bar-fill', style: `width:${shares[k]}%` })))));
 }
 
+/** Альбом жизни: шестнадцать сыгранных карт с картинками. По нажатию карта открывается воспоминанием. */
+function album() {
+  return el('section', { class: 'album', 'aria-labelledby': 'album-title' },
+    el('h3', { class: 'table-title', id: 'album-title' }, 'Шестнадцать карт этой жизни'),
+    el('p', { class: 'table-note' }, g('Нажми на карту, чтобы вспомнить, что ты тогда {сделал|сделала} и что было дальше.')),
+    el('ol', { class: 'album-grid' }, state.journal.map((j, i) => {
+      const age = ageOf(j.episode);
+      return el('li', {}, el('button', { class: `album-card sp${j.sphere}`, id: `memory-${i + 1}`, onclick: () => remember(i) },
+        art(imageFor(j.img), '', j.sphere),
+        el('span', { class: 'album-body' },
+          el('span', { class: 'album-age' }, icon(j.sphere), `${age} ${yearsWord(age)}`),
+          el('span', { class: 'album-title' }, j.title))));
+    })));
+}
+
+/** Воспоминание: сыгранная карта целиком — картинка, поступок, цена и что было дальше. Листается кнопками, стрелками и свайпом. */
+function remember(at) {
+  let i = at;
+  const n = state.journal.length;
+  const dlg = el('dialog', { class: 'memory', 'aria-labelledby': 'memory-title' });
+  const close = () => dlg.close();
+  const show = () => {
+    const j = state.journal[i];
+    const age = ageOf(j.episode);
+    dlg.replaceChildren(el('article', { class: `card memory-card sp${j.sphere}` },
+      el('button', { class: 'memory-x', id: 'memory-close', 'aria-label': 'Закрыть', autofocus: true, onclick: close }, '×'),
+      art(imageFor(j.img), `${j.title}, ${ageText(age)}`, j.sphere, { eager: true }),
+      el('div', { class: 'card-body' },
+        el('p', { class: 'card-meta' }, suitChip(j.sphere), `Тебе ${ageText(age)} · карта ${i + 1} из ${n}`),
+        el('h2', { class: 'scene-title', id: 'memory-title' }, j.title),
+        el('div', { class: 'deed' }, el('h3', { class: 'label' }, g('Что ты {сделал|сделала}')), el('p', {}, j.text)),
+        el('p', { class: 'cost' }, j.cost),
+        el('div', { class: 'outcome' }, el('h3', { class: 'label' }, 'Что было дальше'), el('p', {}, j.note))),
+      el('nav', { class: 'memory-nav', 'aria-label': 'Другие карты жизни' },
+        el('button', { class: 'nav-btn', id: 'memory-prev', disabled: i === 0, onclick: () => go(-1) }, '← Раньше'),
+        el('button', { class: 'nav-btn', id: 'memory-next', disabled: i === n - 1, onclick: () => go(1) }, 'Позже →'))));
+    dlg.scrollTop = 0;
+  };
+  const go = (d) => {
+    const k = i + d;
+    if (k < 0 || k >= n) return;
+    const keep = document.activeElement && dlg.contains(document.activeElement) ? document.activeElement.id : null;
+    i = k;
+    show();
+    const b = keep && document.getElementById(keep);
+    (b && !b.disabled ? b : dlg.querySelector('.memory-x')).focus();
+  };
+  dlg.addEventListener('close', () => {
+    dlg.remove();
+    const b = document.getElementById(`memory-${i + 1}`);
+    if (b) b.focus();
+  });
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
+  dlg.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+  });
+  let touch = null;
+  dlg.addEventListener('touchstart', (e) => { touch = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null; }, { passive: true });
+  dlg.addEventListener('touchend', (e) => {
+    if (!touch) return;
+    const dx = e.changedTouches[0].clientX - touch.x, dy = e.changedTouches[0].clientY - touch.y;
+    touch = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) go(dx < 0 ? 1 : -1);
+  });
+  show();
+  document.body.append(dlg);
+  if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+}
+
+// ---------- карточка типа для друзей ----------
+const SITE = 'life64.alesha.love';
+const loadImage = (src) => new Promise((ok) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; });
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+/** Строки по ширине; неразрывные пробелы типографики не рвутся, слишком длинный текст обрезается многоточием. */
+function wrapText(ctx, text, width, max = 99) {
+  const lines = [];
+  let cur = '';
+  for (const w of typo(text).split(' ')) {
+    const test = cur ? `${cur} ${w}` : w;
+    if (!cur || ctx.measureText(test).width <= width) cur = test;
+    else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > max) {
+    const cut = lines.slice(0, max);
+    let last = cut[max - 1];
+    while (last.includes(' ') && ctx.measureText(`${last}…`).width > width) last = last.slice(0, last.lastIndexOf(' '));
+    cut[max - 1] = `${last.replace(/[,.;:—\s]+$/, '')}…`;
+    return cut;
+  }
+  return lines;
+}
+/** Картинка 1080×1350: одно лицо в шести возрастах, тип, его суть, итоговая гексаграмма и адрес игры. */
+async function typeCard(t, ep) {
+  const W = 1080, H = 1350;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  if (!ctx) return null;
+  const F = "Onest, 'Segoe UI', Roboto, system-ui, sans-serif";
+  try { await Promise.all(['700 96px Onest', '600 28px Onest', '500 40px Onest'].map((f) => document.fonts.load(f))); } catch { /* запасной шрифт */ }
+  const faces = await Promise.all(PORTRAIT_AGES.map((a) => loadImage(ageFor(state.sex, a).local)));
+  // стол
+  ctx.fillStyle = '#1a2427';
+  ctx.fillRect(0, 0, W, H);
+  const glow = ctx.createRadialGradient(W / 2, -260, 80, W / 2, -260, 1250);
+  glow.addColorStop(0, '#2c3c41'); glow.addColorStop(1, 'rgba(26, 36, 39, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+  // карта в золотой рамке, как в игре
+  const X = 60, Y = 60, CW = W - 120, CH = H - 120;
+  ctx.save();
+  ctx.shadowColor = 'rgba(5, 10, 12, .5)'; ctx.shadowBlur = 48; ctx.shadowOffsetY = 18;
+  const gold = ctx.createLinearGradient(X, Y, X + CW, Y + CH);
+  gold.addColorStop(0, '#f2deb0'); gold.addColorStop(0.4, '#e0b25e'); gold.addColorStop(0.7, '#a98238'); gold.addColorStop(1, '#f2deb0');
+  ctx.fillStyle = gold;
+  roundRect(ctx, X, Y, CW, CH, 40);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#f7f3ec';
+  roundRect(ctx, X + 6, Y + 6, CW - 12, CH - 12, 35);
+  ctx.fill();
+  const L = X + 64, R = X + CW - 64, IW = R - L;
+  // одно лицо, шесть возрастов
+  const gap = 12, fw = (IW - gap * 5) / 6, fh = fw * 1.25, fy = Y + 64;
+  faces.forEach((im, k) => {
+    const x = L + k * (fw + gap);
+    ctx.save();
+    roundRect(ctx, x, fy, fw, fh, 16);
+    ctx.clip();
+    ctx.fillStyle = '#ede7dc';
+    ctx.fillRect(x, fy, fw, fh);
+    if (im) {
+      const s = Math.max(fw / im.naturalWidth, fh / im.naturalHeight), sw = fw / s, sh = fh / s;
+      ctx.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, x, fy, fw, fh);
+    }
+    ctx.restore();
+    ctx.fillStyle = '#5f6769';
+    ctx.font = `600 26px ${F}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(String(PORTRAIT_AGES[k]), x + fw / 2, fy + fh + 38);
+  });
+  ctx.textAlign = 'left';
+  let y = fy + fh + 38 + 92;
+  ctx.fillStyle = '#5f6769';
+  ctx.font = `500 40px ${F}`;
+  ctx.fillText(g('Ты {прожил|прожила} эту жизнь как'), L, y);
+  // тип: самый крупный кегль, при котором имя входит в две строки
+  let size = 108, nameLines;
+  for (; size > 60; size -= 6) {
+    ctx.font = `700 ${size}px ${F}`;
+    nameLines = wrapText(ctx, t.name, IW);
+    if (nameLines.length <= 2) break;
+  }
+  ctx.fillStyle = '#23282a';
+  y += 22;
+  for (const ln of nameLines) { y += size * 1.02; ctx.fillText(ln, L, y); }
+  y += 30;
+  ctx.font = `500 42px ${F}`;
+  ctx.fillStyle = '#23282a';
+  const footTop = Y + CH - 168;
+  const room = Math.max(1, Math.floor((footTop - 40 - y) / 60));
+  for (const ln of wrapText(ctx, t.essence, IW, Math.min(room, 6))) { y += 60; ctx.fillText(ln, L, y); }
+  // поступки, по которым виден тип: сколько поместится, до трёх
+  const deeds = (t.deeds || []).slice(0, 3);
+  if (deeds.length && footTop - y > 240) {
+    y += 78;
+    ctx.fillStyle = '#5f6769';
+    ctx.font = `600 28px ${F}`;
+    ctx.fillText('Это видно по поступкам', L, y);
+    const AW = 150;
+    for (const d of deeds) {
+      ctx.font = `500 34px ${F}`;
+      const lines = wrapText(ctx, d.text, IW - AW, 2);
+      if (y + 24 + lines.length * 46 > footTop - 36) break;
+      y += 24;
+      ctx.fillStyle = '#5f6769';
+      ctx.font = `600 32px ${F}`;
+      ctx.fillText(`${d.age} ${yearsWord(d.age)}`, L, y + 46);
+      ctx.fillStyle = '#23282a';
+      ctx.font = `500 34px ${F}`;
+      for (const ln of lines) { y += 46; ctx.fillText(ln, L + AW, y); }
+    }
+  }
+  // подвал: итоговая гексаграмма и адрес
+  ctx.fillStyle = '#e1d9cb';
+  ctx.fillRect(L, footTop, IW, 2);
+  const hx = L, hy = footTop + 40, hs = 2.6;
+  const hl = state.journal.length ? state.journal[state.journal.length - 1].line : 0;
+  for (let l = 1; l <= 6; l++) {
+    const ry = hy + (20.8 - (l - 1) * 4.16) * hs;
+    ctx.fillStyle = l === hl ? '#a98238' : '#23282a';
+    for (const [x0, w0] of line(state.bits, l) ? [[0, 20]] : [[0, 7.8], [12.2, 7.8]]) { roundRect(ctx, hx + x0 * hs, ry, w0 * hs, 2.2 * hs, 2); ctx.fill(); }
+  }
+  ctx.fillStyle = '#5f6769';
+  ctx.font = `500 26px ${F}`;
+  ctx.fillText('Итог по И-Цзин', hx + 52 + 26, hy + 22);
+  ctx.fillStyle = '#23282a';
+  ctx.font = `600 30px ${F}`;
+  const motif = wrapText(ctx, `№${ep.final.hex} «${ep.final.motif}»`, IW * 0.5, 1)[0];
+  ctx.fillText(motif, hx + 52 + 26, hy + 60);
+  ctx.textAlign = 'right';
+  ctx.font = `700 36px ${F}`;
+  ctx.fillText('Прожить жизнь', R, hy + 22);
+  ctx.fillStyle = '#a98238';
+  ctx.font = `600 30px ${F}`;
+  ctx.fillText(SITE, R, hy + 62);
+  return new Promise((ok) => { try { c.toBlob(ok, 'image/png'); } catch { ok(null); } });
+}
+
+/** Под картой типа: поделиться картинкой (где можно отправить файл) или сохранить её. Картинка готовится заранее. */
+function shareRow(t, ep) {
+  const note = el('p', { class: 'share-note', 'aria-live': 'polite' });
+  const row = el('div', { class: 'share' });
+  let made = null;
+  const make = () => {
+    if (!made) {
+      made = typeCard(t, ep).then((blob) => {
+        if (!blob) throw new Error('canvas');
+        return { blob, url: URL.createObjectURL(blob), file: new File([blob], 'prozhit-zhizn.png', { type: 'image/png' }) };
+      });
+      made.catch(() => { made = null; });
+    }
+    return made;
+  };
+  const preview = (m) => {
+    if (row.querySelector('.share-preview')) return;
+    row.append(el('figure', { class: 'share-preview' },
+      el('img', { src: m.url, alt: `Карточка типа «${t.name}»`, width: '1080', height: '1350' }),
+      el('figcaption', {}, 'Это картинка для друзей. Её можно сохранить: нажми и подержи или нажми «Сохранить картинку».')));
+  };
+  let shareFiles = false;
+  try { shareFiles = !!(navigator.canShare && navigator.canShare({ files: [new File(['x'], 'x.png', { type: 'image/png' })] })); } catch { shareFiles = false; }
+  const share = async () => {
+    try {
+      const m = await make();
+      preview(m);
+      await navigator.share({ files: [m.file], title: 'Прожить жизнь', text: `${g('Я {прожил|прожила} эту жизнь как')} ${t.name}. https://${SITE}` });
+    } catch (e) {
+      if (!e || e.name !== 'AbortError') note.textContent = 'Отправить отсюда не получилось. Картинку можно сохранить.';
+    }
+  };
+  const save = async () => {
+    try {
+      const m = await make();
+      preview(m);
+      const a = el('a', { href: m.url, download: 'prozhit-zhizn.png' });
+      document.body.append(a);
+      a.click();
+      a.remove();
+    } catch { note.textContent = 'В этом браузере картинка не получилась.'; }
+  };
+  row.append(el('div', { class: 'share-actions' },
+    shareFiles ? el('button', { class: 'btn-soft', id: 'share', onclick: share }, 'Поделиться типом') : null,
+    el('button', { class: 'btn-soft', id: 'save-card', onclick: save }, 'Сохранить картинку')), note);
+  // заранее, чтобы «Поделиться» сработало сразу по нажатию (браузеры разрешают отправку только в ответ на него)
+  setTimeout(() => { if (row.isConnected) make().catch(() => {}); }, 1200);
+  return row;
+}
+
 function renderEnding() {
   const ep = buildEpilogue(state);
   const t = ep.type;
   const pq = wholePercents(t.quadShares, QUAD_ORDER), pr = wholePercents(t.roleShares, ROLE_ORDER);
   const lastJ = state.journal[TOTAL_EPISODES - 1];
-  const again = () => { if (LS) storage.clear(LS); state = null; render(); window.scrollTo(0, 0); };
+  const again = () => swap(() => { if (LS) storage.clear(LS); state = null; render(); window.scrollTo(0, 0); });
   const routeRows = ep.route.map((r) => el('tr', {},
     el('td', { class: 'num' }, String(r.age)),
     el('td', {}, el('span', { class: 'hexno' }, `№${r.hex}`), ' ', r.motif, el('span', { class: 'muted' }, ` · ${QUAD_RU[r.quadrum]} · ${r.sphere}`)),
@@ -5283,7 +5745,9 @@ function renderEnding() {
             el('div', {}, el('h3', { class: 'label' }, 'Чего было больше'), bars(t.quadShares, QUAD_ORDER, QUAD_RU, QUAD_SHORT, t.quad)),
             el('div', {}, el('h3', { class: 'label' }, g('Как ты {поступал|поступала}')), bars(t.roleShares, ROLE_ORDER, ROLE_RU, ROLE_SHORT, t.role))),
           el('p', { class: 'type-note' }, 'Решения в 35–51 год считаются вдвое: это зрелость, главная часть жизни.')))),
+    shareRow(t, ep),
     el('p', { class: 'table-text' }, ep.final.text),
+    album(),
     ep.people.length ? el('section', { class: 'people-end' }, el('h3', { class: 'table-title' }, 'Что стало с людьми твоей жизни'),
       el('ul', { class: 'cast' }, ep.people.map((p) => el('li', { class: 'person' },
         el('span', { class: 'token', 'aria-hidden': 'true' }, p.name.charAt(0)),
