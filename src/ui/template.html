@@ -49,9 +49,10 @@
 .sp3 { --sp: var(--close); --sp-hi: var(--close-hi); }
 
 * { box-sizing: border-box; }
+/* фон страницы задаёт html, у body фон прозрачный: иначе он закрыл бы свечение body::after */
 html { -webkit-text-size-adjust: 100%; background: var(--table); }
 /* сверху отступ под строку состояния телефона (у игры с экрана «Домой» она поверх страницы) */
-body { margin: 0; min-height: 100vh; padding-top: env(safe-area-inset-top, 0px); background: var(--table); color: var(--table-ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
+body { margin: 0; min-height: 100vh; padding-top: env(safe-area-inset-top, 0px); background: transparent; color: var(--table-ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.55;
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
 p, li { text-wrap: pretty; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--table); }

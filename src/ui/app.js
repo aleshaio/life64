@@ -144,10 +144,13 @@ function art(src, alt, sp, { cls = '', eager = false } = {}) {
 // следующая карта вырастает в сцену, а лицо в табло взрослеет плавно. Без них или при «меньше движения» всё как раньше.
 const canMorph = () => !calm() && typeof document.startViewTransition === 'function';
 let morph = null; // какая карта сейчас перелетает в новый экран: 'played' (сыгранная) или 'next' (следующая)
+let swaps = 0;
 function swap(update, name = null) {
   if (!canMorph()) { update(); return; }
+  const mine = ++swaps;
   morph = name;
   const done = () => {
+    if (mine !== swaps) return; // уже идёт следующая смена экрана: убирать будет она
     morph = null;
     document.querySelectorAll('[data-vt]').forEach((n) => { n.style.removeProperty('view-transition-name'); n.removeAttribute('data-vt'); });
   };
@@ -205,7 +208,9 @@ function renderHud() {
     }))));
 }
 
+const shareUrls = []; // картинки карточки типа живут, пока открыт финал
 function render() {
+  while (shareUrls.length) URL.revokeObjectURL(shareUrls.pop());
   renderHud();
   root.replaceChildren();
   document.body.classList.toggle('at-start', !state);
@@ -275,7 +280,7 @@ function ageCycle(card, sex) {
     if (!layers) layers = PORTRAIT_AGES.slice(1).map((a) => fig.insertBefore(el('img', { class: 'age-layer', src: ageFor(sex, a).local, alt: '', decoding: 'async' }), badge));
     card.classList.add('aging');
     clearInterval(timer);
-    timer = setInterval(() => setAge((k + 1) % PORTRAIT_AGES.length), 1100);
+    timer = setInterval(() => { if (!card.isConnected) { clearInterval(timer); return; } setAge((k + 1) % PORTRAIT_AGES.length); }, 1100);
   });
   card.addEventListener('mouseleave', () => {
     clearInterval(timer);
@@ -515,7 +520,10 @@ function remember(at) {
   let i = at;
   const n = state.journal.length;
   const dlg = el('dialog', { class: 'memory', 'aria-labelledby': 'memory-title' });
-  const close = () => dlg.close();
+  const close = () => {
+    if (typeof dlg.close === 'function') dlg.close();
+    else { dlg.removeAttribute('open'); dlg.dispatchEvent(new Event('close')); }
+  };
   const show = () => {
     const j = state.journal[i];
     const age = ageOf(j.episode);
@@ -651,10 +659,10 @@ async function typeCard(t, ep) {
   ctx.fillText(g('Ты {прожил|прожила} эту жизнь как'), L, y);
   // тип: самый крупный кегль, при котором имя входит в две строки
   let size = 108, nameLines;
-  for (; size > 60; size -= 6) {
+  for (; size > 56; size -= 4) {
     ctx.font = `700 ${size}px ${F}`;
     nameLines = wrapText(ctx, t.name, IW);
-    if (nameLines.length <= 2) break;
+    if (nameLines.length <= 2 && nameLines.every((ln) => ctx.measureText(ln).width <= IW)) break;
   }
   ctx.fillStyle = '#23282a';
   y += 22;
@@ -727,7 +735,9 @@ function shareRow(t, ep) {
     if (!made) {
       made = typeCard(t, ep).then((blob) => {
         if (!blob) throw new Error('canvas');
-        return { blob, url: URL.createObjectURL(blob), file: new File([blob], 'prozhit-zhizn.png', { type: 'image/png' }) };
+        const url = URL.createObjectURL(blob);
+        shareUrls.push(url);
+        return { blob, url, file: new File([blob], 'prozhit-zhizn.png', { type: 'image/png' }) };
       });
       made.catch(() => { made = null; });
     }
