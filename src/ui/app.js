@@ -244,7 +244,12 @@ function newsNote(saved) {
   const note = el('aside', { class: 'news deal', style: '--i:1', 'aria-label': 'Что нового' },
     el('p', { class: 'news-k' }, 'Новое в версии 1.0'),
     el('p', { class: 'news-t' }, 'Все картинки нарисованы заново. Карты переворачиваются, лицо взрослеет плавно, а в конце вся жизнь проходит перед глазами. Ещё появились альбом жизни и карточка типа, которой можно поделиться.'),
-    el('button', { class: 'news-x', type: 'button', 'aria-label': 'Скрыть', onclick: () => { newsDone(); note.remove(); } }, '×'));
+    el('button', { class: 'news-x', type: 'button', 'aria-label': 'Скрыть', onclick: () => {
+      newsDone();
+      const next = root.querySelector('#continue, .hero-card'); // фокус не теряется: переходит к следующей кнопке
+      note.remove();
+      if (next) next.focus();
+    } }, '×'));
   return note;
 }
 
@@ -827,7 +832,7 @@ function playIcon() {
   return svg;
 }
 function lifeReel(lastJ) {
-  const fig = art(imageFor(lastJ.img), 'Последний вечер', lastJ.sphere);
+  const fig = art(imageFor(lastJ.img), 'Последний вечер', lastJ.sphere, { eager: true });
   const fresh = endingFresh;
   endingFresh = false;
   const shots = state.journal.slice(0, -1).map((j) => ({ src: imageFor(j.img), age: ageOf(j.episode), title: j.title })).filter((s) => s.src);
@@ -835,18 +840,19 @@ function lifeReel(lastJ) {
   const last = { age: ageOf(lastJ.episode), title: lastJ.title };
   const cap = el('span', { class: 'reel-cap', 'aria-hidden': 'true' });
   const bar = el('span', { class: 'reel-bar', 'aria-hidden': 'true' });
-  const btn = el('button', { class: 'reel-btn', type: 'button' }, playIcon(), 'Пролистать жизнь');
+  const btn = el('button', { class: 'reel-btn', type: 'button', 'aria-pressed': 'false' }, playIcon(), 'Пролистать жизнь');
   fig.classList.add('reel');
   fig.append(cap, bar, btn);
   const say = (s) => { cap.textContent = typo(`${s.age} ${yearsWord(s.age)} · ${s.title}`); };
   let frames = null;
   let run = 0; // номер показа: таймеры прошлого показа видят, что он уже не их, и молчат
   const frameSet = () => frames || (frames = shots.map((s, i) => fig.insertBefore(
-    el('img', { class: 'reel-frame', src: s.src.local, alt: '', decoding: 'async', style: `transform-origin:${REEL_ORIGINS[i % REEL_ORIGINS.length]}` }), cap)));
+    el('img', { class: 'reel-frame', src: s.src.local, alt: '', decoding: 'async', fetchpriority: 'low', style: `transform-origin:${REEL_ORIGINS[i % REEL_ORIGINS.length]}` }), cap)));
   const later = (mine, ms, f) => setTimeout(() => { if (mine === run && fig.isConnected) f(); }, ms);
+  const playing = (on) => { fig.classList.toggle('playing', on); btn.setAttribute('aria-pressed', String(on)); if (!on) fig.classList.remove('cued'); };
   const stop = () => {
     run++;
-    fig.classList.remove('playing', 'cued');
+    playing(false);
     if (frames) frames.forEach((f) => f.classList.remove('on'));
   };
   async function play() {
@@ -860,7 +866,7 @@ function lifeReel(lastJ) {
     if (ready.length < 4) { fig.classList.remove('cued'); return; }
     list.forEach((f) => f.classList.remove('on'));
     fig.style.setProperty('--reel', `${(ready.length + 1) * REEL_STEP}ms`);
-    fig.classList.add('playing');
+    playing(true);
     let k = 0;
     const tick = () => {
       if (k < ready.length) {
@@ -874,7 +880,7 @@ function lifeReel(lastJ) {
       } else {
         ready[ready.length - 1][0].classList.remove('on'); // под последним кадром — последний вечер
         say(last);
-        later(mine, 1700, () => fig.classList.remove('playing', 'cued'));
+        later(mine, 1700, () => playing(false));
       }
     };
     tick();
@@ -882,9 +888,22 @@ function lifeReel(lastJ) {
   btn.addEventListener('click', (e) => { e.stopPropagation(); if (fig.classList.contains('playing')) stop(); else play(); });
   fig.addEventListener('click', () => { if (fig.classList.contains('playing')) stop(); });
   if (fresh && !calm()) {
-    frameSet(); // кадры начинают грузиться сразу, пока читается первая строка
+    // кадры начинают грузиться, когда уже видна сама картинка последнего вечера: на медленной сети она важнее
     fig.classList.add('cued');
-    setTimeout(() => { if (fig.isConnected && !run) play(); }, 1300);
+    const main = fig.querySelector('img');
+    let begun = false;
+    const begin = () => {
+      if (begun) return;
+      begun = true;
+      frameSet();
+      setTimeout(() => { if (fig.isConnected && !run) play(); }, 1300);
+    };
+    if (!main || (main.complete && main.naturalWidth)) begin();
+    else {
+      main.addEventListener('load', begin, { once: true });
+      main.addEventListener('error', begin, { once: true });
+      setTimeout(begin, 6000);
+    }
   }
   return fig;
 }

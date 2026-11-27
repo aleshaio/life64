@@ -125,7 +125,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .art { position: relative; margin: 0; aspect-ratio: 3 / 2; max-width: 100%; overflow: hidden; background: linear-gradient(160deg, var(--card-2), var(--card-3)); }
 .art img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .5s ease; }
 .art.ready img { opacity: 1; }
-.art.gone img { display: none; }
+.art.gone > img:not(.reel-frame) { display: none; }
 .art-mark { position: absolute; inset: 0; display: grid; place-items: center; color: var(--sp); opacity: .6; }
 .art-mark .ico { width: 3rem; height: 3rem; stroke-width: 1.4; }
 .art.ready .art-mark { display: none; }
@@ -438,6 +438,8 @@ dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
 .reel-btn:hover { background: rgba(20, 28, 31, .84); }
 .reel-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .reel.playing .reel-btn, .reel.cued .reel-btn { opacity: 0; pointer-events: none; transition-delay: 0s; }
+.reel.playing .reel-btn:focus-visible, .reel.cued .reel-btn:focus-visible { opacity: 1; pointer-events: auto; }
+.reel:has(.reel-btn:focus-visible) .reel-cap { max-width: calc(100% - 12rem); }
 .reel.playing { cursor: pointer; }
 .ico-play { fill: currentColor; stroke: none; color: var(--accent); }
 /* в итоге поступка перевёрнутая черта гексаграммы ложится на место */
