@@ -1,0 +1,11 @@
+# Cloudflare: игра как статический сайт (Workers static assets) на life64.alesha.love.
+# Выложить: npm run deploy (один раз нужен вход: npx wrangler login).
+name = "life64"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "./dist"
+
+[[routes]]
+pattern = "life64.alesha.love"
+custom_domain = true

@@ -1,0 +1,15 @@
+{
+  "name": "life64",
+  "version": "0.8.0",
+  "private": true,
+  "type": "module",
+  "description": "«Прожить жизнь» — текстовая игра: одна жизнь за 16 решений, 64 гексаграммы И-Цзин, каждое решение переворачивает одну черту",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "simulate": "node scripts/simulate.mjs",
+    "build": "node scripts/build.mjs",
+    "art": "node scripts/fetch-art.mjs",
+    "start": "node scripts/build.mjs && node scripts/serve.mjs",
+    "deploy": "node scripts/build.mjs && npx wrangler deploy"
+  }
+}

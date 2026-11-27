@@ -1,0 +1,5 @@
+node_modules/
+.wrangler/
+.backup/
+.DS_Store
+dist/img/*.png
