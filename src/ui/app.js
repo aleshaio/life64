@@ -379,6 +379,8 @@ function renderScene() {
     el('footer', { class: 'table-foot' }, restartControl()),
   ));
   if (DEBUG) root.append(debugPanel(sc));
+  const hand = root.querySelector('.hand');
+  requestAnimationFrame(() => { if (hand.isConnected && hand.offsetHeight < window.innerHeight - 130) hand.classList.add('pin'); });
   keyHandler = (e) => {
     const n = Number(e.key);
     if (n >= 1 && n <= sc.choices.length && !e.metaKey && !e.ctrlKey && !e.altKey) choose(sc.choices[n - 1].id, document.getElementById(`choice-${n}`));

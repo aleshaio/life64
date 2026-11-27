@@ -161,6 +161,10 @@ button { -webkit-tap-highlight-color: transparent; }
   .board { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 2rem; align-items: start; }
   .card-body { padding: 1.35rem 1.6rem 1.7rem; }
 }
+/* на широком экране карты поступков остаются на виду, пока читаешь сцену (если помещаются по высоте целиком) */
+@media (min-width: 64rem) {
+  .hand.pin { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 6.6rem); }
+}
 
 /* люди жизни: жетоны */
 .people { margin-top: 1.8rem; }
