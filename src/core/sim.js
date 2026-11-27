@@ -1,5 +1,5 @@
 // Симуляции и анализ достижимости. Используются тестами и scripts/simulate.mjs.
-import { newGame, buildScene, applyChoice, acknowledge, isOver, situation, TOTAL_EPISODES } from './engine.js';
+import { newGame, buildScene, applyChoice, acknowledge, isOver, situation, TOTAL_EPISODES, START_OPTIONS, randomStart } from './engine.js';
 import { flip, hexNumber, popcount } from './hexagram.js';
 
 /** Детерминированный ГПСЧ (mulberry32). */
@@ -14,10 +14,12 @@ export function rng(seed) {
   };
 }
 
-/** Прожить жизнь по списку id или по случайному выбору. */
-export function live({ seed = 1, ids = null, patternEffect = true, sex = 'M' } = {}) {
+/** Прожить жизнь по списку id или по случайному выбору. start — номер старта (0..3); без него случайная жизнь
+ *  начинается в случайной стороне, а повтор по id — дома, как журналы до версии 0.9. */
+export function live({ seed = 1, ids = null, patternEffect = true, sex = 'M', start = null } = {}) {
   const r = rng(seed);
-  let s = newGame(sex);
+  const st = start ?? (ids ? 0 : randomStart(r));
+  let s = newGame(sex, st);
   const opts = { patternEffect };
   const scenes = [];
   while (!isOver(s)) {
@@ -26,12 +28,12 @@ export function live({ seed = 1, ids = null, patternEffect = true, sex = 'M' } =
     const id = ids ? ids[s.episode - 1] : sc.choices[Math.floor(r() * sc.choices.length)].id;
     s = acknowledge(applyChoice(s, id, opts));
   }
-  return { state: s, scenes, ids: s.journal.map((j) => j.choiceId) };
+  return { state: s, scenes, ids: s.journal.map((j) => j.choiceId), start: st };
 }
 
 /** Точная достижимость по показываемым 4 вариантам: какие узлы и сцены видны на экране и какие финальны. */
-export function reachability(sex = 'M') {
-  let frontier = new Set([newGame(sex).bits]);
+export function reachability(sex = 'M', starts = START_OPTIONS) {
+  let frontier = new Set(starts);
   const sceneNodes = new Set();
   const sceneKeys = new Set();
   const perEpisode = [];

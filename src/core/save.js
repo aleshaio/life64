@@ -1,5 +1,5 @@
 // Сохранение: журнал решений + снимок + контрольная сумма. При загрузке история воспроизводится заново.
-import { newGame, applyChoice, acknowledge, SCHEMA_VERSION } from './engine.js';
+import { newGame, applyChoice, acknowledge, SCHEMA_VERSION, START_OPTIONS } from './engine.js';
 
 export const SAVE_KEY = 'prozhit-zhizn:v3';
 
@@ -28,8 +28,9 @@ export function deserialize(text) {
     if (data.schemaVersion !== SCHEMA_VERSION) return null;
     if (fnv1a(JSON.stringify(body)) !== checksum) return null;
     if (body.sex !== 'M' && body.sex !== 'F') return null;
-    let s = newGame(body.sex);
-    if (body.initialBits !== s.initialBits) return null;
+    const start = START_OPTIONS.indexOf(body.initialBits);
+    if (start < 0) return null;
+    let s = newGame(body.sex, start);
     for (const j of body.journal) {
       if (j.episode !== s.episode || j.from !== s.bits) return null;
       s = acknowledge(applyChoice(s, j.choiceId));

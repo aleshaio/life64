@@ -53,7 +53,7 @@ test('нельзя выбрать непоказанный вариант или
 
 test('история детерминированно воспроизводится по id решений', () => {
   const a = live({ seed: 42 });
-  const b = live({ ids: a.ids });
+  const b = live({ ids: a.ids, start: a.start });
   assert.equal(b.state.bits, a.state.bits);
   assert.deepEqual(b.scenes.map((s) => s.paragraphs), a.scenes.map((s) => s.paragraphs));
   assert.deepEqual(buildEpilogue(b.state), buildEpilogue(a.state));

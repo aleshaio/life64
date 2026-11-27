@@ -2,10 +2,16 @@
 // (6, 12, 20, 35, 52, 75), потом каждая сцена по портрету нужного возраста: лицо одно, но взрослеет.
 // Ключ сцены: пол + эпизод + сфера, например «F7-2». Локальная копия: img/v5-<ключ>.jpg (scripts/fetch-art.mjs),
 // запасной вариант — оригинал по ссылке. Префикс v5- нужен, чтобы fetch-art не оставил старые картинки v0.4.
+// Шесть первых сцен 0.9 (старт в дороге, в деле и у близких) нарисованы в ChatGPT по тем же портретам и промптам:
+// оригиналов на сервере нет, картинка лежит только в dist/img (LOCAL).
 export const IMG_BASE = 'https://d8j0ntlcm91z4.cloudfront.net/user_3EWrDYgOZatxK48XvCVwdjulHAS/';
 const ART_PREFIX = 'v5-';
+export const LOCAL = 'local';
 export const SCENE_ART = {
   'M1-0': 'hf_20261121_011505_2bcfca5c-3bda-424c-b58e-60d15f041da1',
+  'M1-1': LOCAL,
+  'M1-2': LOCAL,
+  'M1-3': LOCAL,
   'M2-0': 'hf_20261127_054549_661759fe-b7ba-433c-ab15-7b2088bae8fa',
   'M2-1': 'hf_20261121_011503_984edb37-e4f8-4310-8192-2815034ef10a',
   'M2-2': 'hf_20261121_011504_3457a4a9-19c5-4c27-8484-a322df5598f9',
@@ -67,6 +73,9 @@ export const SCENE_ART = {
   'M16-2': 'hf_20261121_012215_00240d30-4c08-4ce6-be04-c769f04580f8',
   'M16-3': 'hf_20261121_012215_6f35da00-8956-49a5-a308-84c1d3bb58b9',
   'F1-0': 'hf_20261121_011503_e58a1d5a-e9cd-49ee-afd8-8dcec0598ab1',
+  'F1-1': LOCAL,
+  'F1-2': LOCAL,
+  'F1-3': LOCAL,
   'F2-0': 'hf_20261127_054549_f83ed040-7f68-4b37-90a7-71b03604ea6a',
   'F2-1': 'hf_20261121_011503_bbabae44-8ac0-438a-889d-f6fd960318a5',
   'F2-2': 'hf_20261121_012650_dadd62a8-292a-4192-8157-fe5399e4792d',
@@ -148,7 +157,7 @@ export const AGE_ART = {
   },
 };
 export const PORTRAIT_AGES = [6, 12, 20, 35, 52, 75];
-const artPic = (name, id) => ({ local: `img/${ART_PREFIX}${name}.jpg`, remote: id ? `${IMG_BASE}${id}.png` : null });
+const artPic = (name, id) => ({ local: `img/${ART_PREFIX}${name}.jpg`, remote: id && id !== LOCAL ? `${IMG_BASE}${id}.png` : null });
 /** { local, remote } для сцены или null, если ключа нет. */
 export function imageFor(key) {
   if (!key) return null;
@@ -157,8 +166,8 @@ export function imageFor(key) {
 /** Портрет героя в данном возрасте (6, 12, 20, 35, 52, 75). */
 export const ageFor = (sex, age) => artPic(`age-${sex}-${age}`, AGE_ART[sex][age]);
 export const portraitFor = (sex) => ageFor(sex, 6);
-/** Все картинки для скачивания: [локальное имя без .jpg, id на сервере]. */
+/** Все картинки для скачивания: [локальное имя без .jpg, id на сервере]. Локальные (LOCAL) скачивать неоткуда. */
 export const ART_FILES = [
-  ...Object.entries(SCENE_ART).map(([key, id]) => [`${ART_PREFIX}${key}`, id]),
+  ...Object.entries(SCENE_ART).filter(([, id]) => id !== LOCAL).map(([key, id]) => [`${ART_PREFIX}${key}`, id]),
   ...['M', 'F'].flatMap((sex) => PORTRAIT_AGES.map((a) => [`${ART_PREFIX}age-${sex}-${a}`, AGE_ART[sex][a]])),
 ];

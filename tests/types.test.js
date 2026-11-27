@@ -24,7 +24,7 @@ test('тип однозначен, детерминирован, доли ров
   const seen = new Set();
   for (let seed = 1; seed <= 1500; seed++) {
     for (const sex of ['M', 'F']) {
-      const { state, ids } = live({ seed, sex });
+      const { state, ids, start } = live({ seed, sex });
       const ep = buildEpilogue(state);
       seen.add(ep.type.name);
       assert.equal(sum(ep.type.quadShares), 10000);
@@ -37,7 +37,7 @@ test('тип однозначен, детерминирован, доли ров
       assert.ok(/^[А-ЯЁ]/.test(ep.type.price) && !/^Цена/.test(ep.type.price), `цена: ${ep.type.price}`);
       assert.ok(ep.type.deeds.length >= 3 && ep.type.deeds.every((d) => d.age && /^[А-ЯЁ]/.test(d.text)), 'поступки с возрастом');
       assert.ok(!/[{}|]/.test(ep.type.portrait + ep.type.hint + ep.opening + ep.legacy.join('')));
-      if (seed % 50 === 0) assert.deepEqual(buildEpilogue(live({ ids, sex }).state).type, ep.type);
+      if (seed % 50 === 0) assert.deepEqual(buildEpilogue(live({ ids, sex, start }).state).type, ep.type);
     }
   }
   assert.equal(seen.size, 16, [...seen].join(', '));

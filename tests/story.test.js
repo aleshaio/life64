@@ -1,7 +1,7 @@
 // Сюжетные эксперименты C1–C4 и проверки ветвления: разные поступки ведут в разные сцены.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newGame, buildScene, applyChoice, acknowledge, isOver, choiceId, situation } from '../src/core/engine.js';
+import { newGame, buildScene, applyChoice, acknowledge, isOver, choiceId, situation, START_OPTIONS } from '../src/core/engine.js';
 import { bitsOf, flip } from '../src/core/hexagram.js';
 import { live, reachability, factDiff } from '../src/core/sim.js';
 import { sphereAfter } from '../src/core/sphere.js';
@@ -12,7 +12,7 @@ const key = (sc, sex) => `${sex}${sc.episode}-${sc.sphere}`;
 test('ветвление: в каждой сцене 4 поступка ведут в 4 разные следующие сцены', () => {
   for (const sex of SEXES) {
     const { finalBits } = reachability(sex);
-    let frontier = new Set([newGame(sex).bits]);
+    let frontier = new Set(START_OPTIONS);
     for (let ep = 1; ep < 16; ep++) {
       const next = new Set();
       for (const b of frontier) {
@@ -27,8 +27,19 @@ test('ветвление: в каждой сцене 4 поступка веду
   }
 });
 
-test('все 61 сцена каждой жизни достижима', () => {
-  for (const sex of SEXES) assert.equal(reachability(sex).sceneKeys.size, 61, sex);
+test('все 64 сцены каждой жизни достижимы', () => {
+  for (const sex of SEXES) assert.equal(reachability(sex).sceneKeys.size, 64, sex);
+});
+
+test('четыре старта: жизнь начинается в одной из четырёх сторон, у каждой своя первая сцена', () => {
+  assert.equal(new Set(START_OPTIONS).size, 4);
+  for (const sex of SEXES) {
+    const first = START_OPTIONS.map((_, k) => buildScene(newGame(sex, k)));
+    assert.deepEqual(first.map((sc) => sc.sphere), [0, 1, 2, 3], sex);
+    assert.equal(new Set(first.map((sc) => sc.title)).size, 4, sex);
+    // со старта k жизнь в 10 лет попадает во все четыре стороны
+    for (const k of [0, 1, 2, 3]) assert.equal(reachability(sex, [START_OPTIONS[k]]).perEpisode[1], 4, `${sex} старт ${k}`);
+  }
 });
 
 test('случайные жизни расходятся: разные цепочки сцен и разная память', () => {
@@ -49,11 +60,11 @@ test('случайные жизни расходятся: разные цепо�
   }
 });
 
-test('первый же выбор разводит жизнь: после 6 лет — три разных сцены 10 лет', () => {
-  for (const sex of SEXES) {
-    const sc = buildScene(newGame(sex));
-    const next = new Set(sc.choices.map((c) => buildScene(acknowledge(applyChoice(newGame(sex), c.id))).title));
-    assert.ok(next.size >= 3, `${sex}: ${[...next]}`);
+test('первый же выбор разводит жизнь: после 6 лет — четыре разных сцены 10 лет', () => {
+  for (const sex of SEXES) for (const k of [0, 1, 2, 3]) {
+    const sc = buildScene(newGame(sex, k));
+    const next = new Set(sc.choices.map((c) => buildScene(acknowledge(applyChoice(newGame(sex, k), c.id))).title));
+    assert.equal(next.size, 4, `${sex} старт ${k}: ${[...next]}`);
   }
 });
 
@@ -91,8 +102,8 @@ test('C1: ранний поступок меняет текст поздних �
 
 test('C2: тот же возраст и память, но другая сфера узла — другая сцена и другие поступки', () => {
   for (const sex of SEXES) {
-    let s = newGame(sex);
     const base = live({ seed: 11, sex });
+    let s = newGame(sex, base.start);
     for (const id of base.ids.slice(0, 9)) s = acknowledge(applyChoice(s, id));
     const scenes = [0b000000, 0b000001, 0b000010, 0b000011].map((b) => buildScene({ ...s, bits: b }));
     assert.equal(new Set(scenes.map((x) => x.sphere)).size, 4);
@@ -117,8 +128,9 @@ test('C3: узел может вернуться в другом возраст�
 
 test('C4: абляция — без влияния узла сцена зависит только от возраста, и жизни перестают ветвиться', () => {
   for (const sex of SEXES) {
-    let s = newGame(sex);
-    for (const id of live({ seed: 5, sex }).ids.slice(0, 9)) s = acknowledge(applyChoice(s, id));
+    const base = live({ seed: 5, sex });
+    let s = newGame(sex, base.start);
+    for (const id of base.ids.slice(0, 9)) s = acknowledge(applyChoice(s, id));
     const off = { patternEffect: false };
     const x = buildScene({ ...s, bits: bitsOf(39) }, off), y = buildScene({ ...s, bits: bitsOf(28) }, off);
     assert.equal(x.title, y.title);

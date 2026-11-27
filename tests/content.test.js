@@ -25,14 +25,11 @@ test('в каждой квадре ровно 16 узлов', () => {
   assert.deepEqual(c, { air: 16, fire: 16, water: 16, earth: 16 });
 });
 
-test('две жизни по 16 возрастов; в каждом возрасте сцены на все достижимые сферы', () => {
+test('две жизни по 16 возрастов; в каждом возрасте, и в шесть лет тоже, сцены на все четыре стороны', () => {
   for (const sex of SEXES) {
     assert.deepEqual(LIFE[sex].map((e) => e.age), AGES);
-    LIFE[sex].forEach((e, i) => {
-      const need = i === 0 ? ['0'] : ['0', '1', '2', '3'];
-      assert.deepEqual(Object.keys(e.s).sort(), need, `${sex} эпизод ${e.n}`);
-    });
-    assert.equal(sits(sex).length, 61);
+    LIFE[sex].forEach((e) => assert.deepEqual(Object.keys(e.s).sort(), ['0', '1', '2', '3'], `${sex} эпизод ${e.n}`));
+    assert.equal(sits(sex).length, 64);
   }
 });
 
@@ -132,9 +129,14 @@ test('нет латиницы в русских текстах (Y вместо �
   for (const q of Object.values(TYPES)) for (const t of Object.values(q)) assert.ok(!/[A-Za-z]/.test(t.base.replace(/\{[^}]*\}/g, '')));
 });
 
-test('у каждой сцены есть иллюстрация', async () => {
-  const { SCENE_ART } = await import('../src/data/images.js');
-  for (const sex of SEXES) for (const { ep, sp } of sits(sex)) assert.ok(SCENE_ART[`${sex}${ep}-${sp}`], `${sex}${ep}-${sp}`);
+test('у каждой сцены есть иллюстрация; локальные картинки лежат в dist/img', async () => {
+  const { SCENE_ART, LOCAL, imageFor } = await import('../src/data/images.js');
+  const { existsSync } = await import('node:fs');
+  for (const sex of SEXES) for (const { ep, sp } of sits(sex)) {
+    const key = `${sex}${ep}-${sp}`;
+    assert.ok(SCENE_ART[key], key);
+    if (SCENE_ART[key] === LOCAL) assert.ok(existsSync(`dist/${imageFor(key).local}`), `нет файла dist/${imageFor(key).local}`);
+  }
 });
 
 test('у каждой сцены свой промпт иллюстрации на английском, без кириллицы', () => {

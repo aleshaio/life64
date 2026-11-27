@@ -46,6 +46,19 @@ test('повреждённые данные отвергаются, а не пр
   assert.equal(deserialize(JSON.stringify(e)), null);
 });
 
+test('жизнь с любого из четырёх стартов сохраняется и восстанавливается; чужой старт отвергается', () => {
+  for (const k of [0, 1, 2, 3]) {
+    let s = newGame('F', k);
+    for (let i = 0; i < 4; i++) s = acknowledge(applyChoice(s, buildScene(s).choices[i % 4].id));
+    const r = deserialize(serialize(s));
+    assert.ok(r, `старт ${k}`);
+    assert.equal(r.initialBits, s.initialBits);
+    assert.deepEqual(buildScene(r).title, buildScene(s).title);
+  }
+  const odd = { ...newGame('M'), initialBits: 0b111111, bits: 0b111111 };
+  assert.equal(deserialize(serialize(odd)), null);
+});
+
 test('подделанный журнал с правильной суммой, но непоказанным выбором, отвергается', () => {
   let s = newGame();
   const sc = buildScene(s);

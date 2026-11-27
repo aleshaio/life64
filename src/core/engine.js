@@ -29,8 +29,14 @@ export const ageOf = (episode) => AGES[episode - 1];
 
 export const actOf = (episode) => Math.floor((episode - 1) / 4); // 0..3
 
-export function newGame(sex = 'M') {
-  return { v: SCHEMA_VERSION, sex: sex === 'F' ? 'F' : 'M', initialBits: START_BITS, bits: START_BITS, episode: 1, facts: {}, journal: [], acked: 0 };
+/** Четыре старта: №57 (дом) и соседние узлы, отличающиеся одной из черт 1, 2, 3, — дорога, дело, близкие.
+ *  Поэтому уже в шесть лет жизнь начинается в любой из четырёх сторон, и сцен в каждой жизни 16 × 4 = 64. */
+export const START_OPTIONS = [0, 1, 2, 4].map((mask) => START_BITS ^ mask);
+export const randomStart = (rand = Math.random) => Math.floor(rand() * START_OPTIONS.length);
+
+export function newGame(sex = 'M', start = 0) {
+  const b = START_OPTIONS[start] ?? START_BITS;
+  return { v: SCHEMA_VERSION, sex: sex === 'F' ? 'F' : 'M', initialBits: b, bits: b, episode: 1, facts: {}, journal: [], acked: 0 };
 }
 
 export const isOver = (state) => state.episode > TOTAL_EPISODES;

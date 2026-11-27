@@ -1,6 +1,6 @@
 // Интерфейс «Колода жизни»: старт (его или её жизнь), сцена-карта и четыре карты поступков,
 // итог поступка с развилкой, финал с картой-типом. Внизу экранов — путь по И-Цзин. Скрытая отладка: ?debug=1.
-import { newGame, buildScene, applyChoice, acknowledge, isOver, pendingResult, buildEpilogue, ageText, ageOf, forkOf, sceneMap, yearsWord, TOTAL_EPISODES } from '../core/engine.js';
+import { newGame, buildScene, applyChoice, acknowledge, isOver, pendingResult, buildEpilogue, ageText, ageOf, forkOf, sceneMap, yearsWord, TOTAL_EPISODES, START_OPTIONS } from '../core/engine.js';
 import { storage } from '../core/save.js';
 import { AGES } from '../data/life.js';
 import { imageFor, portraitFor, ageFor, PORTRAIT_AGES } from '../data/images.js';
@@ -219,8 +219,17 @@ function renderStart() {
   ));
 }
 
+/** Старт в случайной стороне жизни; сначала те первые сцены, которых игрок ещё не видел. Номер старта = номер сферы. */
+function pickStart(sex) {
+  const seen = seenSet();
+  const all = START_OPTIONS.map((_, k) => k);
+  const fresh = all.filter((k) => !seen.has(`${sex}1-${k}`));
+  const pool = fresh.length ? fresh : all;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function start(sex) {
-  state = newGame(sex);
+  state = newGame(sex, pickStart(sex));
   persist();
   render();
   window.scrollTo(0, 0);
