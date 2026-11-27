@@ -234,6 +234,20 @@ function render() {
   return renderScene();
 }
 
+/** Что нового — только тем, кто уже играл: пока не закроют заметку или не начнут новую жизнь. */
+const NEWS_KEY = 'prozhit-zhizn:news';
+const NEWS_VERSION = '1.0';
+const newsSeen = () => { try { return !LS || LS.getItem(NEWS_KEY) === NEWS_VERSION; } catch { return true; } };
+const newsDone = () => { try { if (LS) LS.setItem(NEWS_KEY, NEWS_VERSION); } catch { /* ignore */ } };
+function newsNote(saved) {
+  if (newsSeen() || (!saved && !seenSet().size)) return null;
+  const note = el('aside', { class: 'news deal', style: '--i:1', 'aria-label': 'Что нового' },
+    el('p', { class: 'news-k' }, 'Новое в версии 1.0'),
+    el('p', { class: 'news-t' }, 'Все картинки нарисованы заново. Карты переворачиваются, лицо взрослеет плавно, а в конце вся жизнь проходит перед глазами. Ещё появились альбом жизни и карточка типа, которой можно поделиться.'),
+    el('button', { class: 'news-x', type: 'button', 'aria-label': 'Скрыть', onclick: () => { newsDone(); note.remove(); } }, '×'));
+  return note;
+}
+
 function renderStart() {
   keyHandler = null;
   const saved = LS ? storage.load(LS) : null;
@@ -257,6 +271,7 @@ function renderStart() {
     el('h1', { class: 'title' }, 'Прожить жизнь'),
     el('p', { class: 'lede' }, 'Город на большой реке, шестнадцать возрастов. В каждом тебе сдают сцену и четыре карты поступков, и каждая ведёт в свою сторону жизни. Люди запомнят твои поступки, а в конце станет ясно, каким человеком была прожита эта жизнь.'),
     el('ul', { class: 'suit-legend', 'aria-label': 'Четыре масти' }, SUITS.map((s, i) => el('li', {}, suitChip(i)))),
+    newsNote(saved),
     hadBroken ? el('p', { class: 'warn' }, 'Прошлое сохранение повреждено и не может быть восстановлено. Можно начать новую жизнь.') : null,
     saved ? el('div', { class: 'actions' }, el('button', { class: 'btn-go', id: 'continue', onclick: () => swap(() => { state = saved; render(); window.scrollTo(0, 0); }) },
       isOver(saved) ? 'Вернуться к концу жизни' : `Продолжить · ${ageText(ageOf(saved.episode))}`)) : null,
@@ -316,6 +331,7 @@ function pickStart(sex) {
 function start(sex, card) {
   const face = card && card.querySelector('.portrait.ready');
   if (face && canMorph()) fly(face, 'face');
+  newsDone();
   swap(() => {
     state = newGame(sex, pickStart(sex));
     persist();
