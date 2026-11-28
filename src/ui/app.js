@@ -1468,7 +1468,7 @@ function renderEnding() {
     livesTable(t),
     album(),
     ep.people.length ? el('section', { class: 'people-end' }, el('h3', { class: 'table-title' }, 'Что стало с людьми твоей жизни'),
-      el('ul', { class: 'cast' }, ep.people.map((p) => el('li', { class: 'person' },
+      el('ul', { class: 'cast' }, ep.people.map((p) => el('li', { class: /больше нет/.test(p.status) ? 'person passed' : 'person' },
         personToken(p),
         el('span', {}, el('b', {}, p.name), p.who ? el('span', { class: 'muted' }, `, ${p.who}`) : null, ` — ${p.who && p.status.startsWith(`${p.who.split(' ')[0]}, `) ? p.status.slice(p.who.split(' ')[0].length + 2) : p.status}`))))) : null,
     lifeMap(ep.path),
