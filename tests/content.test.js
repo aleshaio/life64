@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PATTERNS } from '../src/data/patterns.js';
-import { LIFE, AGES, LEGACY } from '../src/data/life.js';
+import { LIFE, AGES, LEGACY, CHAPTERS } from '../src/data/life.js';
 import { TYPES } from '../src/data/types.js';
 import { holds } from '../src/core/engine.js';
 import { PEOPLE } from '../src/data/people.js';
@@ -127,6 +127,19 @@ test('след поступка не называет возраст: «в N л�
 test('нет латиницы в русских текстах (Y вместо У и т. п.)', () => {
   for (const sex of SEXES) for (const t of allTexts(sex)) assert.ok(!/[A-Za-z]/.test(fillHeir(t)), `латиница: ${t}`);
   for (const q of Object.values(TYPES)) for (const t of Object.values(q)) assert.ok(!/[A-Za-z]/.test(t.base.replace(/\{[^}]*\}/g, '')));
+});
+
+test('четыре главы жизни по временам года, по четыре возраста; у каждой эпиграф для его и её жизни', () => {
+  assert.equal(CHAPTERS.length * 4, AGES.length);
+  assert.deepEqual(CHAPTERS.map((c) => c.title.split('.')[0]), ['Весна', 'Лето', 'Осень', 'Зима']);
+  for (const c of CHAPTERS) {
+    assert.match(c.title, /^[А-ЯЁ][а-яё]+\. [А-ЯЁ][а-яё]+$/);
+    for (const sex of SEXES) {
+      const t = c.epigraph[sex];
+      // одна короткая строка; эпиграф показывается как есть, поэтому без вариантов {он|она} и латиницы
+      assert.ok(t && t.length >= 20 && t.length <= 80 && /[.!]$/.test(t) && !BAD.test(t) && !/[{|}A-Za-z]/.test(t), `${c.title}, ${sex}: ${t}`);
+    }
+  }
 });
 
 test('у каждой сцены есть иллюстрация; локальные картинки лежат в dist/img', async () => {

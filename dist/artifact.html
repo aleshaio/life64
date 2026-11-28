@@ -167,6 +167,47 @@ button { -webkit-tap-highlight-color: transparent; }
   .hand.pin { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 6.6rem); }
 }
 
+/* глава жизни: первая сцена главы открывается широкой картиной времени года, под ней строка-эпиграф */
+.chapter { margin: 0 0 1.5rem; }
+.chapter-art { position: relative; margin: 0; aspect-ratio: 2.2 / 1; border-radius: var(--r-card); overflow: hidden; background: linear-gradient(160deg, var(--table-hi), var(--table-deep)); box-shadow: var(--lift); }
+.chapter-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .8s ease; }
+.chapter-art.ready img { opacity: 1; }
+/* подпись тихо лежит внизу картины, на мягкой тени */
+.chapter-art::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+  background: radial-gradient(120% 115% at 0% 100%, rgba(14, 20, 22, .55), rgba(14, 20, 22, 0) 60%),
+    linear-gradient(to top, rgba(14, 20, 22, .8), rgba(14, 20, 22, .42) 32%, rgba(14, 20, 22, 0) 62%); }
+.chapter-cap { position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; padding: 1rem 1.15rem 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; text-shadow: 0 1px 14px rgba(8, 12, 14, .5); }
+.chapter-kicker { display: flex; align-items: baseline; flex-wrap: wrap; font-size: .8rem; font-weight: 600; line-height: 1.2; }
+.chapter-k { font-weight: 650; letter-spacing: .07em; color: var(--accent); }
+.chapter-ages { color: rgba(233, 237, 235, .82); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.chapter-ages::before { content: "·"; margin: 0 .45em; color: rgba(233, 237, 235, .5); }
+.chapter-name { margin: 0; font-family: var(--font-display); font-weight: 650; font-size: clamp(1.55rem, 1.1rem + 1.9vw, 2.6rem); line-height: 1.06; letter-spacing: -.028em; color: #fbf8f2; text-wrap: balance; }
+.chapter-epi { margin: .8rem 0 0; padding: 0 1.15rem; max-width: 40rem; font-size: 1.04rem; line-height: 1.5; color: var(--table-dim); text-wrap: balance; }
+.chapter-epi::before { content: ""; display: block; width: 1.6rem; height: 2px; margin-bottom: .6rem; border-radius: 2px; background: var(--accent-deep); }
+@media (min-width: 48rem) {
+  .chapter { margin-bottom: 1.9rem; }
+  .chapter-art { aspect-ratio: 2.6 / 1; }
+  .chapter-cap { padding: 1.5rem 1.7rem 1.45rem; gap: .4rem; }
+  .chapter-kicker { font-size: .88rem; }
+  .chapter-epi { padding: 0 1.7rem; max-width: 52rem; font-size: 1.12rem; }
+}
+/* картины ещё нет: глава — заголовок прямо на столе */
+.chapter-art.gone { aspect-ratio: auto; overflow: visible; border-radius: 0; background: none; box-shadow: none; }
+.chapter-art.gone img, .chapter-art.gone::after { display: none; }
+.chapter-art.gone .chapter-cap { position: static; padding: .3rem 0 0; text-shadow: none; }
+.chapter-art.gone .chapter-name { color: var(--table-ink); }
+.chapter-art.gone .chapter-ages { color: var(--table-dim); }
+.chapter:has(.chapter-art.gone) .chapter-epi { padding: 0; }
+/* появление: картина проявляется и чуть оседает, подпись и эпиграф следом; после перелёта карты — позже */
+.chapter.enter { --d: 0s; }
+.chapter.late { --d: .5s; }
+.chapter.enter .chapter-art { animation: chapter-in .7s var(--d) cubic-bezier(.2, .8, .2, 1) backwards; }
+.chapter.enter .chapter-art.ready img { animation: settle 2.6s var(--d) cubic-bezier(.2, .7, .2, 1) backwards; }
+.chapter.enter .chapter-cap > * { animation: chapter-in .6s cubic-bezier(.2, .8, .2, 1) backwards; }
+.chapter.enter .chapter-kicker { animation-delay: calc(var(--d) + .2s); }
+.chapter.enter .chapter-name { animation-delay: calc(var(--d) + .3s); }
+.chapter.enter .chapter-epi { animation: chapter-in .8s calc(var(--d) + .5s) cubic-bezier(.2, .8, .2, 1) backwards; }
+
 /* люди жизни: жетоны */
 .people { margin-top: 1.8rem; }
 .people ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -244,9 +285,21 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 /* старт */
-.start { max-width: 62rem; margin: 0 auto; display: grid; gap: 1.1rem; padding-top: .8rem; }
-.deck { position: relative; height: 7.2rem; margin-top: .4rem; }
-.dc { position: absolute; left: 50%; top: .4rem; width: 4.2rem; height: 5.9rem; margin-left: -2.1rem; border-radius: 10px; background: var(--card); color: var(--sp); box-shadow: var(--lift);
+.start { --gap: 1.1rem; max-width: 62rem; margin: 0 auto; display: grid; gap: var(--gap); padding-top: .8rem; }
+/* обложка: город на большой реке в золотой час; пока картины нет, старт такой же, как без неё */
+.cover { position: relative; margin: 0; aspect-ratio: 16 / 10; border-radius: var(--r-card); overflow: hidden; background: linear-gradient(160deg, var(--table-hi), var(--table-deep)); box-shadow: var(--lift); }
+.cover img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .8s ease; }
+.cover.ready img { opacity: 1; animation: settle 3.2s cubic-bezier(.2, .7, .2, 1) backwards; }
+.cover::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+  background: linear-gradient(to top, rgba(20, 28, 31, .55), rgba(20, 28, 31, .12) 30%, rgba(20, 28, 31, 0) 46%); }
+.cover.gone { display: none; }
+@media (min-width: 48rem) { .cover { aspect-ratio: 2.2 / 1; } }
+@media (min-width: 64rem) { .cover { aspect-ratio: 2.6 / 1; } }
+/* место под знак игры (~104 px): на обложке он ложится на её нижний край, без обложки стоит наверху. Пока в нём веер из четырёх карт */
+.logo-slot { --logo: 6.5rem; position: relative; z-index: 1; display: block; width: var(--logo); height: var(--logo); margin: .2rem auto -.1rem; }
+.cover:not(.gone) + .logo-slot { margin-top: calc(var(--logo) / -2 - var(--gap)); }
+.deck { position: absolute; inset: 0; display: block; transform: scale(.88); }
+.dc { position: absolute; left: 50%; top: 50%; width: 4.2rem; height: 5.9rem; margin: -3.35rem 0 0 -2.1rem; border-radius: 10px; background: var(--card); color: var(--sp); box-shadow: var(--lift);
   display: grid; place-items: start; padding: .45rem .5rem; transform-origin: 50% 135%; transform: rotate(var(--r)); animation: fan .9s cubic-bezier(.2, .8, .2, 1) backwards; }
 .dc .ico { width: 1.35rem; height: 1.35rem; }
 .dc:nth-child(1) { --r: -24deg; } .dc:nth-child(2) { --r: -8deg; } .dc:nth-child(3) { --r: 8deg; } .dc:nth-child(4) { --r: 24deg; }
@@ -420,6 +473,8 @@ dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
 @keyframes ring { from { --p: var(--p0); } }
 @keyframes bump { 45% { transform: scale(1.16); border-color: var(--accent); color: var(--accent); } }
 @keyframes drift { from { transform: scale(1); } to { transform: scale(1.07); } }
+@keyframes settle { from { transform: scale(1.06); } }
+@keyframes chapter-in { from { opacity: 0; transform: translateY(10px); } }
 @keyframes line-turn { from { transform: scaleX(.15); opacity: 0; } 60% { opacity: 1; } }
 .deal { animation: deal .4s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 60ms); }
 .flip { animation: flip .5s cubic-bezier(.2, .8, .2, 1) backwards; }
@@ -4047,6 +4102,23 @@ const F4 = [
 const LIFE = { M: [...M1, ...M2, ...M3, ...M4], F: [...F1, ...F2, ...F3, ...F4] };
 const AGES = [6, 10, 14, 17, 23, 28, 35, 39, 46, 51, 55, 59, 65, 71, 78, 84];
 
+/** Четыре главы жизни по временам года, по четыре возраста в каждой. Первая сцена главы открывается картиной
+ *  (img/v5-act-<пол>-<номер>.jpg) и строкой-эпиграфом. Эпиграфы — во втором лице и без прошедшего времени. */
+const CHAPTERS = [
+  { title: 'Весна. Детство', epigraph: {
+    M: 'В Заречье пахнет бензином и талой водой, и всё ещё впереди.',
+    F: 'Лёд на реке трогается, и всё ещё впереди.' } },
+  { title: 'Лето. Молодость', epigraph: {
+    M: 'Паром ходит до самой темноты, и любая дорога ещё открыта.',
+    F: 'Ночи короткие, сил хватает на всё, и город кажется твоим.' } },
+  { title: 'Осень. Зрелость', epigraph: {
+    M: 'На том берегу желтеют тополя, и уже видно, что выросло из сделанного.',
+    F: 'В Слободе облетают липы, и у каждого слова теперь есть вес.' } },
+  { title: 'Зима. Старость', epigraph: {
+    M: 'Река стоит подо льдом, в мастерской тепло, и есть время всё вспомнить.',
+    F: 'За окном метёт, на плите чайник, и тебе есть кого ждать.' } },
+];
+
 const forms = (nom, gen, dat, acc, ins) => ({ heir: nom, heirGen: gen, heirDat: dat, heirAcc: acc, heirIns: ins });
 
 /** Кто продолжит жизнь героя: сын Миша или ученик Костя (сын Лёши); у героини — дочь Ася или ученица Лиза. */
@@ -4331,6 +4403,10 @@ function imageFor(key) {
 /** Портрет героя в данном возрасте (6, 12, 20, 35, 52, 75). */
 const ageFor = (sex, age) => artPic(`age-${sex}-${age}`, AGE_ART[sex][age]);
 const portraitFor = (sex) => ageFor(sex, 6);
+/** Картина главы жизни (1–4: весна, лето, осень, зима) и обложка стартового экрана. Их дорисовывают:
+ *  пока файла нет, глава открывается одним заголовком, а старт — как раньше, без обложки. */
+const chapterArt = (sex, n) => ({ local: `img/${ART_PREFIX}act-${sex}-${n}.jpg`, remote: null });
+const COVER_ART = { local: 'img/cover.jpg', remote: null };
 /** Картинки для скачивания: [локальное имя без .jpg, id на сервере]. Локальные (LOCAL) скачивать неоткуда; в 1.0 это все. */
 const ART_FILES = [
   ...Object.entries(SCENE_ART).map(([key, id]) => [`${ART_PREFIX}${key}`, id]),
@@ -5126,6 +5202,49 @@ function preloadScene(key) {
   return null;
 }
 
+// Картины глав и обложка старта: их может ещё не быть. Что уже известно про файл, помнится,
+// чтобы экран сразу рисовался в нужном виде, без прыжка вёрстки, когда картина не нашлась.
+const paintings = new Map(); // адрес → 'wait' | 'ok' | 'gone'
+/** Загрузить картину заранее: к нужному экрану она уже в кэше или уже ясно, что её нет. */
+function prefetch(src) {
+  if (!src || paintings.has(src.local)) return;
+  paintings.set(src.local, 'wait');
+  const im = new Image();
+  im.onload = () => paintings.set(src.local, 'ok');
+  im.onerror = () => paintings.set(src.local, 'gone');
+  im.src = src.local;
+}
+/** Картина, которой может не быть: тогда у фигуры класс gone, а вместо картины остаётся текст. */
+function painting(src, alt, cls) {
+  if (paintings.get(src.local) === 'gone') return el('figure', { class: `${cls} gone` });
+  const fig = picture(src, alt, cls, true);
+  const img = fig.querySelector('img');
+  img.addEventListener('load', () => paintings.set(src.local, 'ok'));
+  img.addEventListener('error', () => paintings.set(src.local, 'gone'));
+  return fig;
+}
+
+const ROMAN = ['I', 'II', 'III', 'IV'];
+/** Глава жизни, которую открывает этот эпизод (1, 5, 9, 13): номер, время года и возрасты, или null. */
+function chapterAt(episode) {
+  const per = TOTAL_EPISODES / CHAPTERS.length;
+  const k = (episode - 1) / per;
+  if (!Number.isInteger(k) || !CHAPTERS[k]) return null;
+  const to = AGES[k * per + per - 1];
+  return { ...CHAPTERS[k], n: k + 1, roman: ROMAN[k], ages: `${AGES[k * per]}–${to}\u00A0${yearsWord(to)}` };
+}
+/** Шапка главы над картой сцены: широкая картина времени года с подписью, под ней эпиграф. Без картины — заголовок на столе.
+ *  Проявляется спокойно; если следующая карта вырастает в сцену, то уже после перелёта. */
+function chapterHead(ch, grown) {
+  const fig = painting(chapterArt(state.sex, ch.n), '', 'chapter-art');
+  fig.append(el('figcaption', { class: 'chapter-cap' },
+    el('span', { class: 'chapter-kicker' }, el('span', { class: 'chapter-k' }, `Глава\u00A0${ch.roman}`), el('span', { class: 'chapter-ages' }, ch.ages)),
+    el('h2', { class: 'chapter-name' }, ch.title)));
+  return el('header', { class: calm() ? 'chapter' : grown ? 'chapter enter late' : 'chapter enter' },
+    fig,
+    el('p', { class: 'chapter-epi' }, ch.epigraph[state.sex]));
+}
+
 // Смена экранов. Где браузер умеет View Transitions, выбранная карта переворачивается и становится итогом,
 // следующая карта вырастает в сцену, а лицо в табло взрослеет плавно. Без них или при «меньше движения» всё как раньше.
 const canMorph = () => !calm() && typeof document.startViewTransition === 'function';
@@ -5256,8 +5375,14 @@ function renderStart() {
     ageCycle(card, sex);
     return card;
   };
+  // картины первых глав грузятся заранее, пока выбирают жизнь: глава откроется сразу в нужном виде
+  const ch = saved && !isOver(saved) ? chapterAt(saved.episode) : null;
+  if (ch) prefetch(chapterArt(saved.sex, ch.n));
+  setTimeout(() => { if (!state) ['M', 'F'].forEach((sex) => prefetch(chapterArt(sex, 1))); }, 1500);
   root.append(el('section', { class: 'start' },
-    el('div', { class: 'deck', 'aria-hidden': 'true' }, SUITS.map((s, i) => el('span', { class: `dc sp${i}` }, icon(i)))),
+    painting(COVER_ART, 'Город на большой реке в золотой час', 'cover'),
+    // место под знак игры: пока в нём веер из четырёх карт
+    el('span', { class: 'logo-slot' }, el('span', { class: 'deck', 'aria-hidden': 'true' }, SUITS.map((s, i) => el('span', { class: `dc sp${i}` }, icon(i))))),
     el('p', { class: 'eyebrow' }, '16 решений · от 6 до 84 лет'),
     el('h1', { class: 'title' }, 'Прожить жизнь'),
     el('p', { class: 'lede' }, 'Город на большой реке, шестнадцать возрастов. В каждом тебе сдают сцену и четыре карты поступков, и каждая ведёт в свою сторону жизни. Люди запомнят твои поступки, а в конце станет ясно, каким человеком была прожита эта жизнь.'),
@@ -5378,7 +5503,9 @@ function renderScene() {
   const grown = morph === 'next';
   const sceneArt = art(imageFor(sc.img), `${sc.title}, ${sc.ageText}`, sc.sphere, { eager: true });
   if (grown) fly(sceneArt, 'next');
+  const chapter = chapterAt(sc.episode);
   root.append(el('article', { class: 'scene' },
+    chapter ? chapterHead(chapter, grown) : null,
     el('div', { class: 'board' },
       el('section', { class: grown ? 'card scene-card' : 'card scene-card deal' },
         sceneArt,
@@ -5436,6 +5563,8 @@ function renderResult() {
     isOver(state) ? 'К концу жизни' : `Дальше · ${ageText(ageOf(state.episode))}`));
   // Следующая карта уже с картинкой (она же грузится заранее), а если герой войдёт в новый возраст, видно, как изменится лицо.
   const nextKey = fork ? `${state.sex}${j.episode + 1}-${fork.sphere}` : null;
+  const nextChapter = fork ? chapterAt(j.episode + 1) : null; // следующая сцена открывает главу: её картина грузится заранее
+  if (nextChapter) prefetch(chapterArt(state.sex, nextChapter.n));
   const nowAge = ageOf(j.episode);
   const growFace = (a) => el('figure', { class: 'grow-face' }, picture(ageFor(state.sex, faceAge(a)), '', 'face', true), el('figcaption', {}, `${a} ${yearsWord(a)}`));
   const grow = fork && faceAge(fork.age) !== faceAge(nowAge)

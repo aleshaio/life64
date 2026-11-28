@@ -168,6 +168,10 @@ export function imageFor(key) {
 /** Портрет героя в данном возрасте (6, 12, 20, 35, 52, 75). */
 export const ageFor = (sex, age) => artPic(`age-${sex}-${age}`, AGE_ART[sex][age]);
 export const portraitFor = (sex) => ageFor(sex, 6);
+/** Картина главы жизни (1–4: весна, лето, осень, зима) и обложка стартового экрана. Их дорисовывают:
+ *  пока файла нет, глава открывается одним заголовком, а старт — как раньше, без обложки. */
+export const chapterArt = (sex, n) => ({ local: `img/${ART_PREFIX}act-${sex}-${n}.jpg`, remote: null });
+export const COVER_ART = { local: 'img/cover.jpg', remote: null };
 /** Картинки для скачивания: [локальное имя без .jpg, id на сервере]. Локальные (LOCAL) скачивать неоткуда; в 1.0 это все. */
 export const ART_FILES = [
   ...Object.entries(SCENE_ART).map(([key, id]) => [`${ART_PREFIX}${key}`, id]),

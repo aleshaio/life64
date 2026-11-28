@@ -2,8 +2,8 @@
 // итог поступка с развилкой, финал с картой-типом. Внизу экранов — путь по И-Цзин. Скрытая отладка: ?debug=1.
 import { newGame, buildScene, applyChoice, acknowledge, isOver, pendingResult, buildEpilogue, ageText, ageOf, forkOf, sceneMap, yearsWord, TOTAL_EPISODES, START_OPTIONS } from '../core/engine.js';
 import { storage } from '../core/save.js';
-import { AGES } from '../data/life.js';
-import { imageFor, portraitFor, ageFor, PORTRAIT_AGES } from '../data/images.js';
+import { AGES, CHAPTERS } from '../data/life.js';
+import { imageFor, portraitFor, ageFor, PORTRAIT_AGES, chapterArt, COVER_ART } from '../data/images.js';
 import { QUAD_ORDER, ROLE_ORDER, QUAD_RU, ROLE_RU } from '../data/types.js';
 import { PATTERN_BY_N } from '../data/patterns.js';
 import { coords, bitString, glyph, line, hexNumber } from '../core/hexagram.js';
@@ -162,6 +162,49 @@ function preloadScene(key) {
   return null;
 }
 
+// Картины глав и обложка старта: их может ещё не быть. Что уже известно про файл, помнится,
+// чтобы экран сразу рисовался в нужном виде, без прыжка вёрстки, когда картина не нашлась.
+const paintings = new Map(); // адрес → 'wait' | 'ok' | 'gone'
+/** Загрузить картину заранее: к нужному экрану она уже в кэше или уже ясно, что её нет. */
+function prefetch(src) {
+  if (!src || paintings.has(src.local)) return;
+  paintings.set(src.local, 'wait');
+  const im = new Image();
+  im.onload = () => paintings.set(src.local, 'ok');
+  im.onerror = () => paintings.set(src.local, 'gone');
+  im.src = src.local;
+}
+/** Картина, которой может не быть: тогда у фигуры класс gone, а вместо картины остаётся текст. */
+function painting(src, alt, cls) {
+  if (paintings.get(src.local) === 'gone') return el('figure', { class: `${cls} gone` });
+  const fig = picture(src, alt, cls, true);
+  const img = fig.querySelector('img');
+  img.addEventListener('load', () => paintings.set(src.local, 'ok'));
+  img.addEventListener('error', () => paintings.set(src.local, 'gone'));
+  return fig;
+}
+
+const ROMAN = ['I', 'II', 'III', 'IV'];
+/** Глава жизни, которую открывает этот эпизод (1, 5, 9, 13): номер, время года и возрасты, или null. */
+function chapterAt(episode) {
+  const per = TOTAL_EPISODES / CHAPTERS.length;
+  const k = (episode - 1) / per;
+  if (!Number.isInteger(k) || !CHAPTERS[k]) return null;
+  const to = AGES[k * per + per - 1];
+  return { ...CHAPTERS[k], n: k + 1, roman: ROMAN[k], ages: `${AGES[k * per]}–${to}\u00A0${yearsWord(to)}` };
+}
+/** Шапка главы над картой сцены: широкая картина времени года с подписью, под ней эпиграф. Без картины — заголовок на столе.
+ *  Проявляется спокойно; если следующая карта вырастает в сцену, то уже после перелёта. */
+function chapterHead(ch, grown) {
+  const fig = painting(chapterArt(state.sex, ch.n), '', 'chapter-art');
+  fig.append(el('figcaption', { class: 'chapter-cap' },
+    el('span', { class: 'chapter-kicker' }, el('span', { class: 'chapter-k' }, `Глава\u00A0${ch.roman}`), el('span', { class: 'chapter-ages' }, ch.ages)),
+    el('h2', { class: 'chapter-name' }, ch.title)));
+  return el('header', { class: calm() ? 'chapter' : grown ? 'chapter enter late' : 'chapter enter' },
+    fig,
+    el('p', { class: 'chapter-epi' }, ch.epigraph[state.sex]));
+}
+
 // Смена экранов. Где браузер умеет View Transitions, выбранная карта переворачивается и становится итогом,
 // следующая карта вырастает в сцену, а лицо в табло взрослеет плавно. Без них или при «меньше движения» всё как раньше.
 const canMorph = () => !calm() && typeof document.startViewTransition === 'function';
@@ -292,8 +335,14 @@ function renderStart() {
     ageCycle(card, sex);
     return card;
   };
+  // картины первых глав грузятся заранее, пока выбирают жизнь: глава откроется сразу в нужном виде
+  const ch = saved && !isOver(saved) ? chapterAt(saved.episode) : null;
+  if (ch) prefetch(chapterArt(saved.sex, ch.n));
+  setTimeout(() => { if (!state) ['M', 'F'].forEach((sex) => prefetch(chapterArt(sex, 1))); }, 1500);
   root.append(el('section', { class: 'start' },
-    el('div', { class: 'deck', 'aria-hidden': 'true' }, SUITS.map((s, i) => el('span', { class: `dc sp${i}` }, icon(i)))),
+    painting(COVER_ART, 'Город на большой реке в золотой час', 'cover'),
+    // место под знак игры: пока в нём веер из четырёх карт
+    el('span', { class: 'logo-slot' }, el('span', { class: 'deck', 'aria-hidden': 'true' }, SUITS.map((s, i) => el('span', { class: `dc sp${i}` }, icon(i))))),
     el('p', { class: 'eyebrow' }, '16 решений · от 6 до 84 лет'),
     el('h1', { class: 'title' }, 'Прожить жизнь'),
     el('p', { class: 'lede' }, 'Город на большой реке, шестнадцать возрастов. В каждом тебе сдают сцену и четыре карты поступков, и каждая ведёт в свою сторону жизни. Люди запомнят твои поступки, а в конце станет ясно, каким человеком была прожита эта жизнь.'),
@@ -414,7 +463,9 @@ function renderScene() {
   const grown = morph === 'next';
   const sceneArt = art(imageFor(sc.img), `${sc.title}, ${sc.ageText}`, sc.sphere, { eager: true });
   if (grown) fly(sceneArt, 'next');
+  const chapter = chapterAt(sc.episode);
   root.append(el('article', { class: 'scene' },
+    chapter ? chapterHead(chapter, grown) : null,
     el('div', { class: 'board' },
       el('section', { class: grown ? 'card scene-card' : 'card scene-card deal' },
         sceneArt,
@@ -472,6 +523,8 @@ function renderResult() {
     isOver(state) ? 'К концу жизни' : `Дальше · ${ageText(ageOf(state.episode))}`));
   // Следующая карта уже с картинкой (она же грузится заранее), а если герой войдёт в новый возраст, видно, как изменится лицо.
   const nextKey = fork ? `${state.sex}${j.episode + 1}-${fork.sphere}` : null;
+  const nextChapter = fork ? chapterAt(j.episode + 1) : null; // следующая сцена открывает главу: её картина грузится заранее
+  if (nextChapter) prefetch(chapterArt(state.sex, nextChapter.n));
   const nowAge = ageOf(j.episode);
   const growFace = (a) => el('figure', { class: 'grow-face' }, picture(ageFor(state.sex, faceAge(a)), '', 'face', true), el('figcaption', {}, `${a} ${yearsWord(a)}`));
   const grow = fork && faceAge(fork.age) !== faceAge(nowAge)
