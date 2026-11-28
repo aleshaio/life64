@@ -178,3 +178,10 @@ export const ART_FILES = [
   ...Object.entries(SCENE_ART).map(([key, id]) => [`${ART_PREFIX}${key}`, id]),
   ...['M', 'F'].flatMap((sex) => PORTRAIT_AGES.map((a) => [`${ART_PREFIX}age-${sex}-${a}`, AGE_ART[sex][a]])),
 ].filter(([, id]) => id !== LOCAL);
+
+// 1.1: портреты людей жизни в финале «Что стало с людьми твоей жизни»: каждый такой, каким герой его помнит.
+// Ключ — пол героя и ключ человека из people.js. Пока портрета нет, в кружке остаётся буква.
+export const PEOPLE_ART = new Set([]);
+export const personArt = (sex, key) => (PEOPLE_ART.has(`${sex}-${key}`)
+  ? { local: `img/people/${sex}-${key}.jpg`, set: `img/people/xs/${sex}-${key}.webp 96w, img/people/sm/${sex}-${key}.webp 192w`, remote: null }
+  : null);

@@ -3,7 +3,7 @@
 import { newGame, buildScene, applyChoice, acknowledge, isOver, pendingResult, buildEpilogue, ageText, ageOf, forkOf, sceneMap, yearsWord, TOTAL_EPISODES, START_OPTIONS } from '../core/engine.js';
 import { storage } from '../core/save.js';
 import { AGES, CHAPTERS } from '../data/life.js';
-import { imageFor, portraitFor, ageFor, hasFace, PORTRAIT_AGES, chapterArt, COVER_ART, endArt, typeArt } from '../data/images.js';
+import { imageFor, portraitFor, ageFor, hasFace, PORTRAIT_AGES, chapterArt, COVER_ART, endArt, typeArt, personArt } from '../data/images.js';
 import { QUAD_ORDER, ROLE_ORDER, QUAD_RU, ROLE_RU } from '../data/types.js';
 import { PATTERN_BY_N } from '../data/patterns.js';
 import { coords, bitString, glyph, line, hexNumber } from '../core/hexagram.js';
@@ -723,6 +723,16 @@ function agesStrip(sex) {
       el('figcaption', { class: 'age-num' }, ages.length > 6 ? String(a) : `${a} ${yearsWord(a)}`)))));
 }
 
+/** Кружок человека в финале: портрет, каким герой его помнит, а если портрета нет или он не загрузился — первая буква имени. */
+function personToken(p) {
+  const art = state && personArt(state.sex, p.key);
+  if (!art) return el('span', { class: 'token', 'aria-hidden': 'true' }, p.name.charAt(0));
+  const tok = el('span', { class: 'token face', 'aria-hidden': 'true' });
+  const img = el('img', { src: art.local, srcset: art.set, sizes: '(min-width: 48rem) 52px, 46px', alt: '', loading: 'lazy', decoding: 'async' });
+  img.addEventListener('error', () => { tok.classList.remove('face'); tok.replaceChildren(p.name.charAt(0)); }, { once: true });
+  tok.append(img);
+  return tok;
+}
 function peopleStrip(people) {
   if (!people.length) return null;
   return el('section', { class: 'people', 'aria-label': 'Люди твоей жизни' },
@@ -1375,7 +1385,7 @@ function renderEnding() {
     album(),
     ep.people.length ? el('section', { class: 'people-end' }, el('h3', { class: 'table-title' }, 'Что стало с людьми твоей жизни'),
       el('ul', { class: 'cast' }, ep.people.map((p) => el('li', { class: 'person' },
-        el('span', { class: 'token', 'aria-hidden': 'true' }, p.name.charAt(0)),
+        personToken(p),
         el('span', {}, el('b', {}, p.name), p.who ? el('span', { class: 'muted' }, `, ${p.who}`) : null, ` — ${p.status}`))))) : null,
     lifeMap(ep.path),
     pathStrip(),

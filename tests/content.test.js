@@ -185,3 +185,15 @@ test('шрифт подписей не подменяет кириллицу к�
   const { readFileSync } = await import('node:fs');
   assert.ok(!/Alegreya\+?\s?Sans\s?SC/.test(readFileSync('src/ui/template.html', 'utf8')));
 });
+
+test('1.1: портреты людей жизни — только для людей из people.js, и все файлы на месте', async () => {
+  const { PEOPLE_ART, personArt } = await import('../src/data/images.js');
+  const { PEOPLE } = await import('../src/data/people.js');
+  const { existsSync } = await import('node:fs');
+  for (const id of PEOPLE_ART) {
+    const [sex, key] = id.split('-');
+    assert.ok(PEOPLE[sex] && PEOPLE[sex].some((p) => p.key === key), `нет человека ${id}`);
+    const pic = personArt(sex, key);
+    for (const f of [pic.local, ...pic.set.split(',').map((c) => c.trim().split(/\s+/)[0])]) assert.ok(existsSync(`dist/${f}`), `нет файла dist/${f}`);
+  }
+});
