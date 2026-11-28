@@ -744,8 +744,9 @@ function agesStrip(sex) {
 }
 
 /** Кружок человека в финале: портрет, каким герой его помнит, а если портрета нет или он не загрузился — первая буква имени. */
+const GROWN = { son: 'son-adult', daughter: 'daughter-adult' }; // в финале сын и дочь уже взрослые, детский портрет им не подходит
 function personToken(p) {
-  const art = state && personArt(state.sex, p.key);
+  const art = state && personArt(state.sex, GROWN[p.key] || p.key);
   if (!art) return el('span', { class: 'token', 'aria-hidden': 'true' }, p.name.charAt(0));
   const tok = el('span', { class: 'token face', 'aria-hidden': 'true' });
   const img = el('img', { src: art.local, srcset: art.set, sizes: '(min-width: 48rem) 52px, 46px', alt: '', loading: 'lazy', decoding: 'async' });
@@ -1024,7 +1025,7 @@ function remember(at) {
       el('button', { class: 'memory-x', id: 'memory-close', 'aria-label': 'Закрыть', autofocus: true, onclick: close }, '×'),
       art(imageFor(j.img), `${j.title}, ${ageText(age)}`, j.sphere, { eager: true, sizes: SIZES.memory }),
       el('div', { class: 'card-body' },
-        el('p', { class: 'card-meta' }, suitChip(j.sphere), `\u2060Тебе ${ageText(age)} · карта ${i + 1} из ${n}`),
+        el('p', { class: 'card-meta' }, suitChip(j.sphere), `\u2060Тебе ${ageText(age)}`, ' ', el('span', { class: 'nw' }, `· карта ${i + 1} из ${n}`)),
         el('h2', { class: 'scene-title', id: 'memory-title' }, j.title),
         el('div', { class: 'deed' }, el('h3', { class: 'label' }, g('Что ты {сделал|сделала}')), el('p', {}, j.text)),
         el('p', { class: 'cost' }, j.cost),
@@ -1413,7 +1414,7 @@ function renderEnding() {
   const again = () => swap(() => { if (LS) storage.clear(LS); state = null; render(); window.scrollTo(0, 0); });
   const routeRows = ep.route.map((r) => el('tr', {},
     el('td', { class: 'num' }, String(r.age)),
-    el('td', {}, el('span', { class: 'hexno' }, `№${r.hex}`), ' ', r.motif, el('span', { class: 'muted' }, ` · ${QUAD_RU[r.quadrum]} · ${r.sphere}`)),
+    el('td', {}, el('span', { class: 'hexno' }, `№${r.hex}`), ' ', r.motif, el('span', { class: 'muted td-sub' }, `${QUAD_RU[r.quadrum]} · ${r.sphere}`)),
     el('td', { class: 'num' }, `${r.line} · ${ROLE_RU[r.role]}`),
     el('td', {}, r.choice)));
   root.append(el('article', { class: 'ending' },

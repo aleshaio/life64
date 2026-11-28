@@ -205,8 +205,8 @@ test('1.1: портреты людей жизни — только для люд
   const { PEOPLE } = await import('../src/data/people.js');
   const { existsSync } = await import('node:fs');
   for (const id of PEOPLE_ART) {
-    const [sex, key] = id.split('-');
-    assert.ok(PEOPLE[sex] && PEOPLE[sex].some((p) => p.key === key), `нет человека ${id}`);
+    const sex = id.slice(0, 1), key = id.slice(2);
+    assert.ok(PEOPLE[sex] && PEOPLE[sex].some((p) => p.key === key.replace(/-adult$/, '')), `нет человека ${id}`);
     const pic = personArt(sex, key);
     for (const f of [pic.local, ...pic.set.split(',').map((c) => c.trim().split(/\s+/)[0])]) assert.ok(existsSync(`dist/${f}`), `нет файла dist/${f}`);
   }

@@ -160,7 +160,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .card-body { padding: 1.05rem 1.15rem 1.3rem; display: flex; flex-direction: column; gap: .8rem; min-width: 0; }
 /* мета карты идёт строкой: точка остаётся при масти, а возраст переносится словами, без висящей точки */
 .card-meta { margin: 0; display: block; font-size: .85rem; line-height: 1.45; color: var(--ink-dim); }
-.card-meta .suit { margin-right: .4rem; vertical-align: -.08em; }
+.card-meta .suit { display: inline; margin-right: .4rem; vertical-align: baseline; }
+.card-meta .suit .ico { display: inline-block; vertical-align: -.16em; margin-right: .3rem; }
+.card-meta .suit::after { color: inherit; }
+.card-meta .nw { white-space: nowrap; }
 .card-meta .suit::after { content: "·"; margin-left: .25rem; color: var(--card-3); }
 .art { position: relative; margin: 0; aspect-ratio: 3 / 2; max-width: 100%; overflow: hidden; background: linear-gradient(160deg, var(--card-2), var(--card-3)); }
 .art img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .5s ease; }
@@ -227,7 +230,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .chapter-cap { position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; padding: 1rem 1.15rem 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; text-shadow: 0 1px 14px rgba(8, 12, 14, .5); }
 .chapter-kicker { display: flex; align-items: baseline; flex-wrap: wrap; font-size: .8rem; font-weight: 600; line-height: 1.2; }
 .chapter-k { font-weight: 650; letter-spacing: .07em; color: var(--accent); }
-.chapter-cap .chapter-k { text-shadow: 0 1px 2px rgba(8, 12, 14, .75), 0 0 10px rgba(8, 12, 14, .6); }
+.chapter-cap .chapter-k, .chapter-cap .chapter-ages { text-shadow: 0 1px 2px rgba(8, 12, 14, .8), 0 0 10px rgba(8, 12, 14, .7), 0 0 22px rgba(8, 12, 14, .45); }
 .chapter-ages { color: rgba(233, 237, 235, .82); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
 .chapter-ages::before { content: "·"; margin: 0 .45em; color: rgba(233, 237, 235, .5); }
 .chapter-name { margin: 0; font-family: var(--font-display); font-weight: 650; font-size: clamp(1.55rem, 1.1rem + 1.9vw, 2.6rem); line-height: 1.06; letter-spacing: -.028em; color: #fbf8f2; text-wrap: balance; }
@@ -345,7 +348,7 @@ button { -webkit-tap-highlight-color: transparent; }
 @media (min-width: 48rem) { .cover { aspect-ratio: 2.2 / 1; } }
 @media (min-width: 64rem) { .cover { aspect-ratio: 2.6 / 1; } }
 /* широкий, но невысокий экран: обложка ниже, чтобы карты «Чью жизнь прожить» были видны сразу */
-@media (min-width: 64rem) and (max-height: 62rem) { .cover { aspect-ratio: auto; width: 100%; height: clamp(15rem, 33vh, 24rem); } .cover img { object-position: 50% 42%; } }
+@media (min-width: 64rem) and (max-height: 62rem) { .cover { aspect-ratio: auto; width: 100%; height: clamp(15rem, 33vh, 24rem); } .cover img { object-position: 50% 34%; } }
 /* знак игры (~104 px): медаль на нижнем крае обложки, без обложки стоит наверху */
 .logo-slot { --logo: 6.5rem; position: relative; z-index: 1; display: grid; place-items: center; width: var(--logo); height: var(--logo); margin: .2rem auto -.1rem; border-radius: 50%;
   background: radial-gradient(circle at 50% 30%, var(--table-hi), var(--table-deep) 78%);
@@ -364,7 +367,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .suit-legend .suit { padding: .25rem .7rem .25rem .55rem; border-radius: 99px; border: 1px solid var(--table-line); color: var(--table-ink); }
 /* узкий телефон: четыре стороны жизни в одну строку */
 @media (max-width: 22.5rem) { .suit-legend { gap: .28rem; } .suit-legend .suit { padding: .22rem .5rem .22rem .4rem; gap: .22rem; font-size: .78rem; } }
-@media (max-width: 21.25rem) { .suit-legend { display: grid; grid-template-columns: repeat(2, max-content); justify-content: center; } }
+@media (max-width: 21.25rem) { .suit-legend { display: grid; grid-template-columns: repeat(2, max-content); justify-content: center; } .suit-legend .suit { display: flex; justify-content: center; } }
 .suit-legend .suit .ico { color: var(--sp-hi); }
 .start .actions { display: flex; justify-content: center; margin-top: .3rem; }
 .news { position: relative; width: 100%; max-width: 34rem; margin: 0 auto; padding: .8rem 2.6rem .9rem 1rem; border-radius: var(--r-small); background: var(--table-deep); border: 1px solid var(--table-line); color: var(--table-dim); font-size: .93rem; line-height: 1.5; }
@@ -477,6 +480,7 @@ table { border-collapse: collapse; font-size: .85rem; line-height: 1.4; min-widt
 th { text-align: left; color: var(--table-dim); font-weight: 600; border-bottom: 1px solid var(--table-line); padding: .35rem .5rem; font-size: .8rem; }
 td { border-bottom: 1px solid var(--table-line); padding: .4rem .5rem; vertical-align: top; }
 td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+td .td-sub { display: block; margin-top: .1rem; font-size: .92em; }
 .ending .actions { display: flex; justify-content: center; }
 @media (max-width: 40rem) {
   .ages-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -570,17 +574,17 @@ html:has(dialog.memory[open]) { overflow: hidden; }
 dialog.memory { width: min(44rem, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); margin: auto; padding: 0; border: 0; border-radius: var(--r-card); background: transparent; color: var(--ink); overflow: auto; overscroll-behavior: contain; }
 dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
 .memory[open] .memory-card { animation: deal .32s cubic-bezier(.2, .8, .2, 1) backwards; }
-.memory-card { position: relative; }
+.memory-card { position: relative; overflow: hidden; overflow: clip; } /* clip, а не hidden: так кнопки ниже могут прилипнуть к низу окна */
 .memory-x { position: absolute; top: .6rem; right: .6rem; z-index: 2; width: 2.6rem; height: 2.6rem; display: grid; place-items: center; padding: 0 0 .15rem; border: 0; border-radius: 50%; background: rgba(20, 28, 31, .66); color: var(--table-ink); font: inherit; font-size: 1.6rem; line-height: 1; cursor: pointer; }
 .deed p { margin: 0; font-size: 1.08rem; font-weight: 600; line-height: 1.45; }
-.memory-nav { display: flex; gap: .6rem; padding: 0 1.15rem 1.25rem; }
+.memory-nav { display: flex; gap: .6rem; padding: .8rem 1.15rem 1.25rem; position: sticky; bottom: 0; z-index: 1; background: var(--card); background-image: var(--grain); background-size: 180px 180px; box-shadow: 0 -12px 16px -14px rgba(20, 16, 10, .28); }
 .nav-btn { flex: 1; font: inherit; font-weight: 600; font-size: .96rem; color: var(--ink); background: var(--card-2); border: 0; border-radius: 12px; padding: .75rem 1rem; cursor: pointer; }
 .nav-btn[disabled] { opacity: .4; cursor: default; }
 @media (hover: hover) { .nav-btn:not([disabled]):hover { background: var(--card-3); } }
 .memory-x:focus-visible, .nav-btn:focus-visible, .btn-soft:focus-visible, .album-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 @media (min-width: 64rem) { .memory-nav { padding: 0 1.6rem 1.6rem; } }
 /* на невысоком экране картинка воспоминания ниже, чтобы «Раньше / Позже» было видно без прокрутки */
-@media (min-width: 48rem) and (max-height: 62rem) { .memory-card .art { aspect-ratio: auto; height: min(30rem, 40vh); } }
+@media (min-width: 48rem) and (max-height: 62rem) { .memory-card .art { aspect-ratio: auto; height: min(30rem, 40vh); } .memory-card .art img { object-position: 50% 30%; } .memory-card .art.ready img { transform-origin: 50% 30%; } }
 
 /* отладка */
 .debug { margin-top: 2.5rem; padding: 1rem; border-radius: var(--r-small); background: var(--card); color: var(--ink); font-size: .85rem; }
@@ -694,8 +698,8 @@ body::after { background:
 .legendary.play .seal-hex rect { animation: seal-line .15s calc(.1s + var(--l) * .1s) cubic-bezier(.3, .6, .3, 1) backwards; }
 .legendary.play .seal-hex rect.hl { animation: seal-line .15s calc(.1s + var(--l) * .1s) cubic-bezier(.3, .6, .3, 1) backwards, seal-glint 1s .75s ease-out backwards; }
 .legendary.play .map64 .on { animation: seal-on 1s .75s ease-out backwards; }
-.legendary.play :is(.type-kicker, .type-name, .type-essence) { animation: seal-title .6s .45s cubic-bezier(.2, .8, .2, 1) backwards; }
-.legendary.play .type-name { animation-delay: .55s; }
+.legendary.play :is(.type-kicker, .type-name, .type-essence) { animation: seal-title .6s .25s cubic-bezier(.2, .8, .2, 1) backwards; }
+.legendary.play .type-name { animation-delay: .32s; }
 /* 1.1: картина типа — полосой во всю ширину карты, под сутью типа; проявляется после имени */
 .type-art { position: relative; margin: .15rem -1.2rem 0; aspect-ratio: 2 / 1; overflow: hidden; background: linear-gradient(160deg, var(--card-2), var(--table-dim));
   border-block: 1px solid rgba(169, 130, 56, .38); }
@@ -704,8 +708,8 @@ body::after { background:
 .type-art.gone { display: none; }
 @media (min-width: 48rem) { .type-art { margin-inline: -2.1rem; aspect-ratio: 2.3 / 1; } }
 .legendary.armed:not(.play) .type-art { opacity: 0; }
-.legendary.play .type-art { animation: seal-title .8s .8s cubic-bezier(.2, .8, .2, 1) backwards; }
-.legendary.play .type-essence { animation-delay: .68s; }
+.legendary.play .type-art { animation: seal-title .8s .5s cubic-bezier(.2, .8, .2, 1) backwards; }
+.legendary.play .type-essence { animation-delay: .4s; }
 .legendary.play::after { animation: shine 1.8s 1.2s ease-out both; }
 @keyframes seal-line { from { transform: scaleX(0); } }
 @keyframes seal-glint { from { fill: var(--ink); } 28% { fill: var(--accent); } }
@@ -6015,8 +6019,9 @@ function agesStrip(sex) {
 }
 
 /** Кружок человека в финале: портрет, каким герой его помнит, а если портрета нет или он не загрузился — первая буква имени. */
+const GROWN = { son: 'son-adult', daughter: 'daughter-adult' }; // в финале сын и дочь уже взрослые, детский портрет им не подходит
 function personToken(p) {
-  const art = state && personArt(state.sex, p.key);
+  const art = state && personArt(state.sex, GROWN[p.key] || p.key);
   if (!art) return el('span', { class: 'token', 'aria-hidden': 'true' }, p.name.charAt(0));
   const tok = el('span', { class: 'token face', 'aria-hidden': 'true' });
   const img = el('img', { src: art.local, srcset: art.set, sizes: '(min-width: 48rem) 52px, 46px', alt: '', loading: 'lazy', decoding: 'async' });
@@ -6295,7 +6300,7 @@ function remember(at) {
       el('button', { class: 'memory-x', id: 'memory-close', 'aria-label': 'Закрыть', autofocus: true, onclick: close }, '×'),
       art(imageFor(j.img), `${j.title}, ${ageText(age)}`, j.sphere, { eager: true, sizes: SIZES.memory }),
       el('div', { class: 'card-body' },
-        el('p', { class: 'card-meta' }, suitChip(j.sphere), `\u2060Тебе ${ageText(age)} · карта ${i + 1} из ${n}`),
+        el('p', { class: 'card-meta' }, suitChip(j.sphere), `\u2060Тебе ${ageText(age)}`, ' ', el('span', { class: 'nw' }, `· карта ${i + 1} из ${n}`)),
         el('h2', { class: 'scene-title', id: 'memory-title' }, j.title),
         el('div', { class: 'deed' }, el('h3', { class: 'label' }, g('Что ты {сделал|сделала}')), el('p', {}, j.text)),
         el('p', { class: 'cost' }, j.cost),
@@ -6684,7 +6689,7 @@ function renderEnding() {
   const again = () => swap(() => { if (LS) storage.clear(LS); state = null; render(); window.scrollTo(0, 0); });
   const routeRows = ep.route.map((r) => el('tr', {},
     el('td', { class: 'num' }, String(r.age)),
-    el('td', {}, el('span', { class: 'hexno' }, `№${r.hex}`), ' ', r.motif, el('span', { class: 'muted' }, ` · ${QUAD_RU[r.quadrum]} · ${r.sphere}`)),
+    el('td', {}, el('span', { class: 'hexno' }, `№${r.hex}`), ' ', r.motif, el('span', { class: 'muted td-sub' }, `${QUAD_RU[r.quadrum]} · ${r.sphere}`)),
     el('td', { class: 'num' }, `${r.line} · ${ROLE_RU[r.role]}`),
     el('td', {}, r.choice)));
   root.append(el('article', { class: 'ending' },
