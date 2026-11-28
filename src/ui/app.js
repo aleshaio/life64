@@ -246,6 +246,186 @@ function painting(src, alt, cls, sizes = SIZES.chapter) {
   return fig;
 }
 
+// 1.1: времена года над картинами глав. Сначала видна картина, потом замечаешь, что она чуть живая:
+// летят лепестки, тёплые пылинки, листья или снег. Частицы рисуются кодом на холсте между картиной и тенью с подписью.
+const rnd = (a, b) => a + Math.random() * (b - a);
+/** Заготовка частицы на маленьком холсте (рисуется в квадрате −1…1): на кадре её только копируют, без теней и фильтров. */
+function sprite(w, h, draw) {
+  const c = document.createElement('canvas');
+  c.width = Math.max(2, Math.ceil(w));
+  c.height = Math.max(2, Math.ceil(h));
+  const x = c.getContext('2d');
+  if (x) { x.scale(c.width / 2, c.height / 2); x.translate(1, 1); draw(x); }
+  return c;
+}
+/** Мягкая светлая точка: пыльца, пылинка света, снежинка. soft — где яркость спадает вдвое, core — цвет середины. */
+const glow = (rgb, soft, core = rgb) => sprite(24, 24, (x) => {
+  const gr = x.createRadialGradient(0, 0, 0, 0, 0, 1);
+  gr.addColorStop(0, `rgba(${core}, 1)`); gr.addColorStop(soft, `rgba(${rgb}, .5)`); gr.addColorStop(1, `rgba(${rgb}, 0)`);
+  x.fillStyle = gr; x.fillRect(-1, -1, 2, 2);
+});
+/** Лепесток яблони: к основанию розовее, на кончике выемка, край чуть размыт. */
+const petal = (px, base, tip) => sprite(px * 10, px * 14, (x) => {
+  x.scale(.86, .86);
+  x.shadowColor = tip; x.shadowBlur = px * 1.2;
+  x.beginPath(); x.moveTo(0, 1);
+  x.bezierCurveTo(-.7, .72, -1.12, .02, -.84, -.62); x.bezierCurveTo(-.66, -1, -.18, -1.04, 0, -.8);
+  x.bezierCurveTo(.18, -1.04, .66, -1, .84, -.62); x.bezierCurveTo(1.12, .02, .7, .72, 0, 1);
+  const gr = x.createLinearGradient(0, 1, 0, -1);
+  gr.addColorStop(0, base); gr.addColorStop(.6, tip); gr.addColorStop(1, tip);
+  x.fillStyle = gr; x.fill();
+});
+/** Лист с черешком и жилкой: берёзовый (овальный, с острым кончиком) или кленовый (пять лопастей). Свет сверху слева. */
+const leaf = (px, maple, light, dark) => sprite(px * 16, px * 20, (x) => {
+  x.scale(.92, .92);
+  x.beginPath();
+  if (maple) {
+    const at = (a, r) => [Math.cos(a * Math.PI / 180) * r, .1 + Math.sin(a * Math.PI / 180) * r];
+    const lobes = [[145, .55], [210, .85], [270, 1], [330, .85], [395, .55]];
+    x.moveTo(...at(90, .2));
+    lobes.forEach(([a, r], i) => {
+      const next = lobes[i + 1];
+      x.quadraticCurveTo(...at(a - 18, .8 * r), ...at(a, r));
+      x.quadraticCurveTo(...at(a + 18, .8 * r), ...(next ? at((a + next[0]) / 2, .42) : at(90, .2)));
+    });
+  } else {
+    x.moveTo(0, .7);
+    x.bezierCurveTo(-1.05, .5, -.7, -.5, 0, -1); x.bezierCurveTo(.7, -.5, 1.05, .5, 0, .7);
+  }
+  x.closePath();
+  const gr = x.createLinearGradient(-1, -1, 1, 1);
+  gr.addColorStop(0, light); gr.addColorStop(1, dark);
+  x.fillStyle = gr; x.fill();
+  x.globalAlpha = .45; x.strokeStyle = dark; x.lineWidth = .07; x.stroke();
+  x.beginPath(); x.moveTo(0, 1); x.lineTo(0, maple ? -.72 : -.8);
+  x.globalAlpha = .6; x.lineWidth = .09; x.stroke();
+});
+/** Пушинка одуванчика: пушистый шарик из тонких волосков со светлой серединкой. */
+const fluff = (px) => sprite(px * 15, px * 15, (x) => {
+  x.beginPath();
+  for (let i = 0; i < 22; i++) {
+    const a = i * Math.PI / 11 + .15 * Math.sin(i * 2.3), r = .55 + .35 * Math.abs(Math.sin(i * 1.7));
+    x.moveTo(0, 0); x.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  x.strokeStyle = 'rgba(255, 250, 236, .55)'; x.lineWidth = .045; x.stroke();
+  const gr = x.createRadialGradient(0, 0, 0, 0, 0, .6);
+  gr.addColorStop(0, 'rgba(255, 248, 228, .9)'); gr.addColorStop(.3, 'rgba(255, 248, 228, .35)'); gr.addColorStop(1, 'rgba(255, 248, 228, 0)');
+  x.fillStyle = gr; x.fillRect(-.6, -.6, 1.2, 1.2);
+});
+// Что летит в каждое время года. k — доля от обычного числа частиц (от 14 на телефоне до 36 на широком экране);
+// у вида: доля, заготовки (px — пиксели экрана на пиксель картины) и движение частицы глубины z от 0 (даль) до 1:
+// size — размер в пикселях, скорости vx и vy — в сотых высоты картины в секунду, A и w — размах и темп качания,
+// lift — насколько медленнее падает на краях размаха, spin и tilt — вращение и покачивание, fw — переворот,
+// a — непрозрачность, tw и tf — глубина и темп мерцания.
+const AIR = [null,
+  { k: .9, kinds: [ // весна: бледные лепестки летят наискосок и переворачиваются, между ними едва видна пыльца
+    { share: .6, look: (px) => [petal(px, '#f2c4cd', '#fffaf5'), petal(px, '#e8adbc', '#fde9ed'), petal(px, '#efd0c0', '#fff8ef')],
+      make: (z) => ({ size: 10 + 6 * z, vx: rnd(4.5, 7), vy: rnd(3, 4.5), A: rnd(1.5, 3), w: rnd(.7, 1.3), spin: rnd(-.6, .6), fw: rnd(1.4, 2.6), ax: Math.random() < .5, a: .65 + .25 * z }) },
+    { share: .4, look: () => [glow('255, 241, 208', .28)],
+      make: (z) => ({ size: 3.5 + 2.5 * z, vx: rnd(.8, 2), vy: rnd(-.6, .8), A: rnd(1, 2.5), w: rnd(.3, .7), a: .3 + .3 * z, tw: .55, tf: rnd(.8, 1.6) }) },
+  ] },
+  { k: .9, kinds: [ // лето: тёплые пылинки света медленно поднимаются и мерцают, изредка проплывает пух одуванчика
+    { share: .75, look: () => [glow('255, 220, 146', .36, '255, 251, 238')],
+      make: (z) => ({ size: 7 + 9 * z, vx: rnd(-.5, .8), vy: -rnd(2.2, 4.5), A: rnd(1.5, 3.5), w: rnd(.25, .6), a: .6 + .35 * z, tw: .5, tf: rnd(.6, 1.5) }) },
+    { share: .25, look: (px) => [fluff(px)],
+      make: (z) => ({ size: 12 + 6 * z, vx: rnd(.8, 2.2), vy: -rnd(2.5, 4), A: rnd(2, 4), w: rnd(.35, .8), spin: rnd(-.4, .4), a: .6 + .25 * z, tw: .25, tf: rnd(.5, 1) }) },
+  ] },
+  { k: .75, kinds: [ // осень: янтарные, ржавые и золотые листья кружат и падают медленнее на краях размаха
+    { share: 1, look: (px) => [leaf(px, 0, '#f2c45a', '#c58a2a'), leaf(px, 0, '#e8a040', '#b0621f'), leaf(px, 1, '#d77a3c', '#8e3b1d'), leaf(px, 1, '#e6a743', '#b5682a')],
+      make: (z) => ({ size: 11 + 7 * z, vx: rnd(-1, 2), vy: 4.5 + 4 * z, A: rnd(4, 8), w: rnd(.7, 1.25), lift: .5, tilt: rnd(.45, .85), spin: rnd(-.3, .3), fw: rnd(.6, 2), ax: Math.random() < .5, a: .75 + .2 * z }) },
+  ] },
+  { k: 1, kinds: [ // зима: снег в два слоя — мелкий вдали падает медленнее, крупный и мягкий ближе
+    { share: .6, look: () => [glow('246, 250, 255', .45)],
+      make: (z) => ({ z: .4 * z, size: 4.5 + 2.5 * z, vx: .5, vy: rnd(3.4, 4.6), A: rnd(1, 2.2), w: rnd(.5, 1), a: rnd(.55, .75) }) },
+    { share: .4, look: () => [glow('246, 250, 255', .55)],
+      make: (z) => ({ z: .6 + .4 * z, size: 10 + 5 * z, vx: .8, vy: rnd(6.5, 8.5), A: rnd(2.5, 5), w: rnd(.3, .75), a: rnd(.6, .85) }) },
+  ] },
+];
+// живые холсты: будятся, когда вкладку снова открыли, и убирают за собой, когда экран сменился
+const airs = new Set();
+document.addEventListener('visibilitychange', () => airs.forEach((wake) => wake()));
+/** Холст времени года над картиной главы (season 1–4: весна, лето, осень, зима). Работает, только пока картина
+ *  загрузилась, видна на экране и вкладка открыта; проявляется через секунду с небольшим. При «меньше движения» его нет. */
+function ambience(fig, season) {
+  const air = AIR[season];
+  const img = fig.querySelector('img');
+  if (!air || !img || calm() || fig.classList.contains('gone') || typeof IntersectionObserver !== 'function') return;
+  const cv = el('canvas', { class: 'ambience', 'aria-hidden': 'true' });
+  const ctx = cv.getContext('2d');
+  if (!ctx) return;
+  img.after(cv); // над картиной, но под тенью ::after и подписью
+  const kinds = air.kinds;
+  let parts = [], looks = [], lookKey = 0;
+  let W = 0, H = 0, dpr = 1, s = 1, raf = 0, last = 0, clock = 0, seen = false, was = false, lit = false;
+  const born = (p) => Object.assign(p, { z: p.r, vx: 0, vy: 0, A: 0, w: 1, lift: 0, rot: rnd(0, 6.3), spin: 0, tilt: 0, fw: 0, ax: false, tw: 0, tf: 1,
+    ph: rnd(0, 6.3), fl: rnd(0, 6.3), t0: rnd(0, 6.3), si: Math.floor(Math.random() * looks[p.k].length) }, kinds[p.k].make(p.r));
+  // улетевшая частица возвращается с наветренной стороны: сверху, снизу или сбоку, как больше входит потоком
+  const enter = (p) => {
+    born(p);
+    const m = p.size * s, fy = Math.abs(p.vy) * W, fx = Math.abs(p.vx) * H;
+    if (Math.random() * (fx + fy) < fy) { p.y = p.vy > 0 ? -m : H + m; p.x = rnd(-m, W + m); }
+    else { p.x = p.vx > 0 ? -m : W + m; p.y = rnd(-m, H + m); }
+  };
+  // размер холста по картине; число и размер частиц — по её ширине, скорости — по высоте
+  const fit = () => {
+    const w = fig.clientWidth, h = fig.clientHeight, d = Math.min(2, window.devicePixelRatio || 1);
+    if (!w || !h || (w === W && h === H && d === dpr)) return;
+    if (W) parts.forEach((p) => { p.x *= w / W; p.y *= h / H; });
+    W = w; H = h; dpr = d;
+    s = Math.min(1.3, Math.max(.9, .85 + W / 2600));
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    if (lookKey !== Math.round(s * dpr * 8)) { lookKey = Math.round(s * dpr * 8); looks = kinds.map((k) => k.look(s * dpr)); }
+    const n = Math.min(36, 12 + W / 50) * air.k;
+    const want = kinds.map((k) => Math.round(n * k.share));
+    parts = parts.filter((p) => want[p.k]-- > 0);
+    want.forEach((c, k) => { while (c-- > 0) parts.push(born({ k, r: Math.random(), x: rnd(0, W), y: rnd(0, H) })); });
+    parts.sort((a, b) => a.z - b.z); // дальние под ближними
+  };
+  const frame = (now) => {
+    raf = 0;
+    if (!cv.isConnected || fig.classList.contains('gone')) return wake();
+    const dt = last ? Math.min(.05, (now - last) / 1000) : 0;
+    last = now;
+    clock += dt;
+    if (!lit && clock > 1.2) { lit = true; cv.classList.add('on'); }
+    const v = H / 100, gust = Math.sin(clock * .13) * .7 + Math.sin(clock * .047 + 2) * .4; // общий ветер то сильнее, то тише
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const p of parts) {
+      p.ph += p.w * dt; p.rot += p.spin * dt; p.fl += p.fw * dt;
+      const sw = Math.cos(p.ph), size = p.size * s;
+      p.x += (p.vx + gust * p.z + p.A * p.w * sw) * v * dt;
+      p.y += p.vy * (1 - p.lift * (1 - Math.abs(sw))) * v * dt;
+      if (p.x < -size || p.x > W + size || p.y < -size || p.y > H + size) enter(p);
+      const im = looks[p.k][p.si], wd = size * im.width / im.height;
+      // переворот: лепесток или лист на миг виден почти с ребра
+      const f = p.fw ? Math.cos(p.fl) : 1, flip = f < 0 ? Math.min(f, -.15) : Math.max(f, .15);
+      const ang = p.rot + p.tilt * Math.sin(p.ph), c = Math.cos(ang) * dpr, sn = Math.sin(ang) * dpr;
+      if (p.ax) ctx.setTransform(c, sn, -sn * flip, c * flip, p.x * dpr, p.y * dpr);
+      else ctx.setTransform(c * flip, sn * flip, -sn, c, p.x * dpr, p.y * dpr);
+      ctx.globalAlpha = p.a * (1 - p.tw * (.5 + .5 * Math.sin(clock * p.tf + p.t0)));
+      ctx.drawImage(im, -wd / 2, -size / 2, wd, size);
+    }
+    raf = requestAnimationFrame(frame);
+  };
+  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => (cv.isConnected ? fit() : wake())) : null;
+  const io = new IntersectionObserver((es) => { seen = es[es.length - 1].isIntersecting; was = true; wake(); });
+  const die = () => { cancelAnimationFrame(raf); raf = 0; io.disconnect(); if (ro) ro.disconnect(); airs.delete(wake); };
+  function wake() {
+    if (!cv.isConnected) { if (was) die(); return; } // экран сменился: холст убирает за собой
+    was = true;
+    const run = seen && fig.classList.contains('ready') && !fig.classList.contains('gone') && document.visibilityState !== 'hidden';
+    if (run && !raf) { fit(); last = 0; raf = requestAnimationFrame(frame); }
+    else if (!run && raf) { cancelAnimationFrame(raf); raf = 0; }
+  }
+  airs.forEach((w) => w()); // заодно убрать холсты прежних экранов
+  airs.add(wake);
+  io.observe(fig);
+  if (ro) ro.observe(fig);
+  img.addEventListener('load', wake);
+}
+
 const ROMAN = ['I', 'II', 'III', 'IV'];
 /** Глава жизни, которую открывает этот эпизод (1, 5, 9, 13): номер, время года и возрасты, или null. */
 function chapterAt(episode) {
@@ -262,6 +442,7 @@ function chapterHead(ch, grown) {
   fig.append(el('figcaption', { class: 'chapter-cap' },
     el('span', { class: 'chapter-kicker' }, el('span', { class: 'chapter-k' }, `Глава\u00A0${ch.roman}`), el('span', { class: 'chapter-ages' }, ch.ages)),
     el('h2', { class: 'chapter-name' }, ch.title)));
+  ambience(fig, ch.n);
   return el('header', { class: calm() ? 'chapter' : grown ? 'chapter enter late' : 'chapter enter' },
     fig,
     el('p', { class: 'chapter-epi' }, ch.epigraph[state.sex]));
@@ -1103,6 +1284,7 @@ function epilogue() {
   fig.append(el('figcaption', { class: 'chapter-cap' },
     el('span', { class: 'chapter-kicker' }, el('span', { class: 'chapter-k' }, 'Эпилог'), el('span', { class: 'chapter-ages' }, `84\u00A0${yearsWord(84)}`)),
     el('h2', { class: 'chapter-name' }, g('{Таким|Такой} тебя запомнили'))));
+  ambience(fig, state.sex === 'F' ? 1 : 3); // у неё ранняя весна, у него осень
   return el('section', { class: 'chapter epilogue', 'aria-label': 'Эпилог' }, fig, el('p', { class: 'chapter-epi' }, EPI_SEASON[state.sex]));
 }
 
