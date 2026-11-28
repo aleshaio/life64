@@ -183,7 +183,7 @@ export const ART_FILES = [
 
 // 1.1: портреты людей жизни в финале «Что стало с людьми твоей жизни»: каждый такой, каким герой его помнит.
 // Ключ — пол героя и ключ человека из people.js. Пока портрета нет, в кружке остаётся буква.
-export const PEOPLE_ART = new Set([]);
+export const PEOPLE_ART = new Set(['M-denis', 'M-father', 'M-grandson', 'M-kostya', 'M-lesha', 'M-marina', 'M-mentor', 'M-mother', 'M-nadya', 'M-serega', 'M-son', 'M-student', 'M-tim']);
 export const personArt = (sex, key) => (PEOPLE_ART.has(`${sex}-${key}`)
   ? { local: `img/people/${sex}-${key}.jpg`, set: `img/people/xs/${sex}-${key}.webp 96w, img/people/sm/${sex}-${key}.webp 192w`, remote: null }
   : null);
