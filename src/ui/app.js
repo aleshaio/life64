@@ -1096,8 +1096,12 @@ function wrapText(ctx, text, width, max = 99) {
   }
   return lines;
 }
+/** 1.1: шесть лиц на картинке для друзей — вся жизнь от первой сцены до последней, по возрастам эпизодов. */
+const CARD_AGES = [6, 17, 28, 46, 65, 84];
+const cardAges = (sex) => (CARD_AGES.every((a) => hasFace(sex, a)) ? CARD_AGES : PORTRAIT_AGES);
 /** Картинка 1080×1350: одно лицо в шести возрастах, тип, его суть, итоговая гексаграмма и адрес игры. */
 async function typeCard(t, ep) {
+  const ages = cardAges(state.sex);
   const W = 1080, H = 1350;
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
@@ -1106,7 +1110,7 @@ async function typeCard(t, ep) {
   const F = "Onest, 'Segoe UI', Roboto, system-ui, sans-serif";
   try { await Promise.all(['700 96px Onest', '600 28px Onest', '500 40px Onest'].map((f) => document.fonts.load(f))); } catch { /* запасной шрифт */ }
   const paint = typeArt(t.quad, t.role);
-  const [faces, mark, pic] = await Promise.all([Promise.all(PORTRAIT_AGES.map((a) => loadImage(ageFor(state.sex, a).local))), loadImage('mark-paper.png'), paint ? loadImage(paint.local) : null]);
+  const [faces, mark, pic] = await Promise.all([Promise.all(ages.map((a) => loadImage(ageFor(state.sex, a).local))), loadImage('mark-paper.png'), paint ? loadImage(paint.local) : null]);
   // стол
   ctx.fillStyle = '#1a2427';
   ctx.fillRect(0, 0, W, H);
@@ -1167,7 +1171,7 @@ async function typeCard(t, ep) {
     ctx.fillStyle = '#5f6769';
     ctx.font = `600 26px ${F}`;
     ctx.textAlign = 'center';
-    ctx.fillText(String(PORTRAIT_AGES[k]), x + fw / 2, fy + fh + 38);
+    ctx.fillText(String(ages[k]), x + fw / 2, fy + fh + 38);
   });
   ctx.textAlign = 'left';
   let y = fy + fh + 38 + 92;
