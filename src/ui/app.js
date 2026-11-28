@@ -240,6 +240,7 @@ function prefetch(src, sizes = SIZES.chapter) {
 function painting(src, alt, cls, sizes = SIZES.chapter) {
   if (paintings.get(src.local) === 'gone') return el('figure', { class: `${cls} gone` });
   const fig = picture(src, alt, cls, true, sizes);
+  if (src.focus != null) fig.style.setProperty('--focus', `${src.focus}%`);
   const img = fig.querySelector('img');
   img.addEventListener('load', () => paintings.set(src.local, 'ok'));
   // нет WebP — picture() сам откатится к JPEG; картины нет, только когда не нашёлся и он
@@ -380,7 +381,7 @@ function newsNote(saved) {
   if (newsSeen() || (!saved && !seenSet().size)) return null;
   const note = el('aside', { class: 'news deal', style: '--i:1', 'aria-label': 'Что нового' },
     el('p', { class: 'news-k' }, 'Новое в версии 1.1'),
-    el('p', { class: 'news-t' }, 'У игры появился знак: солнце гексаграммы 64. Жизнь теперь идёт четырьмя главами, от весны детства до зимы старости, у каждой своя картина, а в конце эпилог. Картинки стали чётче на больших экранах, бумага карт стала фактурной, а итог жизни собирается гексаграммой И-Цзин.'),
+    el('p', { class: 'news-t' }, 'Жизнь теперь идёт четырьмя главами, от весны детства до зимы старости, у каждой своя картина. Лицо героя взрослеет с каждым ходом, а в конце ждёт эпилог.'),
     el('button', { class: 'news-x', type: 'button', 'aria-label': 'Скрыть', onclick: () => {
       newsDone();
       const next = root.querySelector('#continue, .hero-card'); // фокус не теряется: переходит к следующей кнопке
