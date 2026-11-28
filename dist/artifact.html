@@ -5543,7 +5543,7 @@ function newsNote(saved) {
   if (newsSeen() || (!saved && !seenSet().size)) return null;
   const note = el('aside', { class: 'news deal', style: '--i:1', 'aria-label': 'Что нового' },
     el('p', { class: 'news-k' }, 'Новое в версии 1.1'),
-    el('p', { class: 'news-t' }, 'Жизнь теперь идёт четырьмя главами, от весны детства до зимы старости, у каждой своя картина. Лицо героя взрослеет с каждым ходом, а в конце ждёт эпилог.'),
+    el('p', { class: 'news-t' }, 'Жизнь теперь идёт четырьмя главами, от весны детства до зимы старости, у каждой своя картина. Лицо героя взрослеет с каждым ходом, а в конце ждут картина твоего типа и эпилог.'),
     el('button', { class: 'news-x', type: 'button', 'aria-label': 'Скрыть', onclick: () => {
       newsDone();
       const next = root.querySelector('#continue, .hero-card'); // фокус не теряется: переходит к следующей кнопке
