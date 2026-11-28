@@ -169,7 +169,7 @@ export const chapterArt = (sex, n) => ({ local: `img/${ART_PREFIX}act-${sex}-${n
 export const COVER_ART = { local: 'img/cover.jpg', set: paintingSet('cover'), remote: null };
 /** Картины типов жизни (1.1): символическая сцена на тип, без лица героя, одна на него и на неё. Ключ — стихия и роль, например earth-IS.
  *  В списке только уже нарисованные: для остальных картины в карте типа нет. */
-export const TYPE_ART = new Set(['air-EN', 'air-IN', 'air-IS', 'air-ES']);
+export const TYPE_ART = new Set(['air-EN', 'air-IN', 'air-IS', 'air-ES', 'fire-EN', 'fire-IN', 'fire-IS', 'fire-ES']);
 export const typeArt = (quad, role) => (TYPE_ART.has(`${quad}-${role}`) ? { local: `img/type-${quad}-${role}.jpg`, set: paintingSet(`type-${quad}-${role}`), remote: null } : null);
 /** Эпилог: герой в старости, каким его запомнили (поздняя осень у него, ранняя весна у неё). */
 export const endArt = (sex) => ({ local: `img/${ART_PREFIX}end-${sex}.jpg`, set: paintingSet(`${ART_PREFIX}end-${sex}`), focus: focusOf(`end-${sex}`), remote: null });
