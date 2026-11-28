@@ -30,7 +30,8 @@ function typo(text) {
     const lastShort = i === parts.length - 1 && parts.length >= 5 && parts[i].length <= 7;
     out += (SHORT_WORD.test(parts[i - 1]) || GLUE_BEFORE.test(parts[i]) || lastShort ? '\u00A0' : ' ') + parts[i];
   }
-  return out;
+  // «где-то», «кое-что»: строка не рвётся на дефисе (незаметный знак-склейка после дефиса)
+  return out.replace(/([а-яё])-(то|либо|нибудь|ка|таки)(?![а-яё])/gi, '$1-\u2060$2').replace(/(^|[^а-яё])(кое|кой)-(?=[а-яё])/gi, '$1$2-\u2060');
 }
 
 const el = (tag, attrs = {}, ...kids) => {
@@ -242,6 +243,7 @@ function painting(src, alt, cls, sizes = SIZES.chapter) {
   if (paintings.get(src.local) === 'gone') return el('figure', { class: `${cls} gone` });
   const fig = picture(src, alt, cls, true, sizes);
   if (src.focus != null) fig.style.setProperty('--focus', `${src.focus}%`);
+  if (src.cap) fig.dataset.cap = src.cap;
   const img = fig.querySelector('img');
   img.addEventListener('load', () => paintings.set(src.local, 'ok'));
   // нет WebP — picture() сам откатится к JPEG; картины нет, только когда не нашёлся и он
@@ -788,7 +790,7 @@ function renderScene() {
       el('section', { class: grown ? 'card scene-card' : 'card scene-card deal' },
         sceneArt,
         el('div', { class: 'card-body' },
-          el('p', { class: 'card-meta' }, suitChip(sc.sphere), `Тебе ${sc.ageText}`),
+          el('p', { class: 'card-meta' }, suitChip(sc.sphere), `\u2060Тебе ${sc.ageText}`),
           el('h2', { class: 'scene-title' }, sc.title),
           el('div', { class: 'prose' }, sc.paragraphs.map((p) => el('p', {}, p))),
           sc.memory.length ? el('aside', { class: 'flashback' }, el('h3', { class: 'label' }, 'Это началось раньше'), sc.memory.map((m) => el('p', {}, m.text))) : null)),
@@ -1022,7 +1024,7 @@ function remember(at) {
       el('button', { class: 'memory-x', id: 'memory-close', 'aria-label': 'Закрыть', autofocus: true, onclick: close }, '×'),
       art(imageFor(j.img), `${j.title}, ${ageText(age)}`, j.sphere, { eager: true, sizes: SIZES.memory }),
       el('div', { class: 'card-body' },
-        el('p', { class: 'card-meta' }, suitChip(j.sphere), `Тебе ${ageText(age)} · карта ${i + 1} из ${n}`),
+        el('p', { class: 'card-meta' }, suitChip(j.sphere), `\u2060Тебе ${ageText(age)} · карта ${i + 1} из ${n}`),
         el('h2', { class: 'scene-title', id: 'memory-title' }, j.title),
         el('div', { class: 'deed' }, el('h3', { class: 'label' }, g('Что ты {сделал|сделала}')), el('p', {}, j.text)),
         el('p', { class: 'cost' }, j.cost),
@@ -1463,7 +1465,7 @@ function renderEnding() {
     ep.people.length ? el('section', { class: 'people-end' }, el('h3', { class: 'table-title' }, 'Что стало с людьми твоей жизни'),
       el('ul', { class: 'cast' }, ep.people.map((p) => el('li', { class: 'person' },
         personToken(p),
-        el('span', {}, el('b', {}, p.name), p.who ? el('span', { class: 'muted' }, `, ${p.who}`) : null, ` — ${p.status}`))))) : null,
+        el('span', {}, el('b', {}, p.name), p.who ? el('span', { class: 'muted' }, `, ${p.who}`) : null, ` — ${p.who && p.status.startsWith(`${p.who.split(' ')[0]}, `) ? p.status.slice(p.who.split(' ')[0].length + 2) : p.status}`))))) : null,
     lifeMap(ep.path),
     pathStrip(),
     el('details', { class: 'reveal', id: 'reveal' },

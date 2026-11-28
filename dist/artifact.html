@@ -130,7 +130,9 @@ button { -webkit-tap-highlight-color: transparent; }
 /* карты */
 .card { background: var(--card); color: var(--ink); border-radius: var(--r-card); box-shadow: var(--lift); overflow: hidden; min-width: 0; }
 .card-body { padding: 1.05rem 1.15rem 1.3rem; display: flex; flex-direction: column; gap: .8rem; min-width: 0; }
-.card-meta { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: .3rem .55rem; font-size: .85rem; color: var(--ink-dim); }
+/* мета карты идёт строкой: точка остаётся при масти, а возраст переносится словами, без висящей точки */
+.card-meta { margin: 0; display: block; font-size: .85rem; line-height: 1.45; color: var(--ink-dim); }
+.card-meta .suit { margin-right: .4rem; vertical-align: -.08em; }
 .card-meta .suit::after { content: "·"; margin-left: .25rem; color: var(--card-3); }
 .art { position: relative; margin: 0; aspect-ratio: 3 / 2; max-width: 100%; overflow: hidden; background: linear-gradient(160deg, var(--card-2), var(--card-3)); }
 .art img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .5s ease; }
@@ -314,6 +316,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .cover.gone { display: none; }
 @media (min-width: 48rem) { .cover { aspect-ratio: 2.2 / 1; } }
 @media (min-width: 64rem) { .cover { aspect-ratio: 2.6 / 1; } }
+/* широкий, но невысокий экран: обложка ниже, чтобы карты «Чью жизнь прожить» были видны сразу */
+@media (min-width: 64rem) and (max-height: 62rem) { .cover { aspect-ratio: auto; width: 100%; height: clamp(15rem, 33vh, 24rem); } .cover img { object-position: 50% 42%; } }
 /* знак игры (~104 px): медаль на нижнем крае обложки, без обложки стоит наверху */
 .logo-slot { --logo: 6.5rem; position: relative; z-index: 1; display: grid; place-items: center; width: var(--logo); height: var(--logo); margin: .2rem auto -.1rem; border-radius: 50%;
   background: radial-gradient(circle at 50% 30%, var(--table-hi), var(--table-deep) 78%);
@@ -330,6 +334,9 @@ button { -webkit-tap-highlight-color: transparent; }
 .lede { margin: 0 auto; max-width: 34rem; text-align: center; font-size: 1.1rem; line-height: 1.55; color: var(--table-dim); text-wrap: balance; }
 .suit-legend { list-style: none; margin: .2rem auto 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem; }
 .suit-legend .suit { padding: .25rem .7rem .25rem .55rem; border-radius: 99px; border: 1px solid var(--table-line); color: var(--table-ink); }
+/* узкий телефон: четыре стороны жизни в одну строку */
+@media (max-width: 22.5rem) { .suit-legend { gap: .28rem; } .suit-legend .suit { padding: .22rem .5rem .22rem .4rem; gap: .22rem; font-size: .78rem; } }
+@media (max-width: 21.25rem) { .suit-legend { display: grid; grid-template-columns: repeat(2, max-content); justify-content: center; } }
 .suit-legend .suit .ico { color: var(--sp-hi); }
 .start .actions { display: flex; justify-content: center; margin-top: .3rem; }
 .news { position: relative; width: 100%; max-width: 34rem; margin: 0 auto; padding: .8rem 2.6rem .9rem 1rem; border-radius: var(--r-small); background: var(--table-deep); border: 1px solid var(--table-line); color: var(--table-dim); font-size: .93rem; line-height: 1.5; }
@@ -356,7 +363,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .hero-card.aging .age-badge { opacity: 1; }
 .portrait.gone { background: radial-gradient(ellipse 15% 12% at 50% 52%, var(--silhouette) 0 96%, transparent 100%), radial-gradient(ellipse 38% 26% at 50% 100%, var(--silhouette) 0 97%, transparent 100%), linear-gradient(160deg, var(--card-2), var(--table-dim)); }
 .hero-name { padding: .8rem .9rem 0; font-family: var(--font-display); font-weight: 650; font-size: 1.2rem; line-height: 1.15; letter-spacing: -.02em; overflow-wrap: anywhere; }
-.hero-sub { padding: .25rem .9rem 0; font-size: .9rem; line-height: 1.38; color: var(--ink-dim); text-wrap: balance; }
+.hero-sub { flex: 1 0 auto; padding: .25rem .9rem 0; font-size: .9rem; line-height: 1.38; color: var(--ink-dim); text-wrap: balance; }
 .meter { display: block; margin: .75rem .9rem .3rem; height: 4px; border-radius: 99px; background: var(--card-2); overflow: hidden; }
 .meter i { display: block; height: 100%; border-radius: 99px; background: var(--accent-deep); }
 .hero-progress { padding: 0 .9rem .85rem; font-size: .8rem; line-height: 1.3; color: var(--ink-dim); }
@@ -365,7 +372,7 @@ button { -webkit-tap-highlight-color: transparent; }
 @media (min-width: 48rem) { .hero-row { gap: 1.4rem; } .hero-name { font-size: 1.3rem; } }
 
 /* финал */
-.ending { display: grid; gap: 1.5rem; max-width: 52rem; margin: 0 auto; }
+.ending { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; max-width: 52rem; margin: 0 auto; }
 .ages-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .55rem; }
 .age-card { margin: 0; background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: var(--lift); }
 .age-card .portrait { border-radius: 0; }
@@ -424,7 +431,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .map-age { align-self: center; font-size: .72rem; color: var(--table-dim); font-variant-numeric: tabular-nums; }
 .map-h { display: flex; justify-content: center; align-items: center; gap: .25rem; padding-bottom: .2rem; color: var(--table-dim); font-size: .76rem; font-weight: 600; }
 .map-h .ico { color: var(--sp-hi); }
-.cell { min-height: 2rem; padding: .3rem; border-radius: 6px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: .68rem; line-height: 1.15; overflow: hidden; overflow-wrap: anywhere; }
+.cell { min-height: 2rem; padding: .3rem; border-radius: 6px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: .68rem; line-height: 1.15; overflow: hidden; overflow-wrap: anywhere; -webkit-hyphens: auto; hyphens: auto; }
 .cell.none { background: transparent; }
 .cell.unknown { color: var(--table-mid); border: 1px dashed var(--table-line); }
 .cell.seen { background: var(--table-hi); color: var(--table-dim); }
@@ -544,6 +551,8 @@ dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
 @media (hover: hover) { .nav-btn:not([disabled]):hover { background: var(--card-3); } }
 .memory-x:focus-visible, .nav-btn:focus-visible, .btn-soft:focus-visible, .album-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 @media (min-width: 64rem) { .memory-nav { padding: 0 1.6rem 1.6rem; } }
+/* на невысоком экране картинка воспоминания ниже, чтобы «Раньше / Позже» было видно без прокрутки */
+@media (min-width: 48rem) and (max-height: 62rem) { .memory-card .art { aspect-ratio: auto; height: min(30rem, 40vh); } }
 
 /* отладка */
 .debug { margin-top: 2.5rem; padding: 1rem; border-radius: var(--r-small); background: var(--card); color: var(--ink); font-size: .85rem; }
@@ -654,11 +663,11 @@ body::after { background:
 .legendary.armed:not(.play) .seal-hex rect { transform: scaleX(0); }
 .legendary.armed:not(.play) :is(.type-kicker, .type-name, .type-essence) { opacity: 0; }
 .legendary.armed::after { animation: none; }
-.legendary.play .seal-hex rect { animation: seal-line .17s calc(.15s + var(--l) * .16s) cubic-bezier(.3, .6, .3, 1) backwards; }
-.legendary.play .seal-hex rect.hl { animation: seal-line .17s calc(.15s + var(--l) * .16s) cubic-bezier(.3, .6, .3, 1) backwards, seal-glint 1s 1.2s ease-out backwards; }
-.legendary.play .map64 .on { animation: seal-on 1s 1.2s ease-out backwards; }
-.legendary.play :is(.type-kicker, .type-name, .type-essence) { animation: seal-title .7s 1.45s cubic-bezier(.2, .8, .2, 1) backwards; }
-.legendary.play .type-name { animation-delay: 1.55s; }
+.legendary.play .seal-hex rect { animation: seal-line .15s calc(.1s + var(--l) * .1s) cubic-bezier(.3, .6, .3, 1) backwards; }
+.legendary.play .seal-hex rect.hl { animation: seal-line .15s calc(.1s + var(--l) * .1s) cubic-bezier(.3, .6, .3, 1) backwards, seal-glint 1s .75s ease-out backwards; }
+.legendary.play .map64 .on { animation: seal-on 1s .75s ease-out backwards; }
+.legendary.play :is(.type-kicker, .type-name, .type-essence) { animation: seal-title .6s .45s cubic-bezier(.2, .8, .2, 1) backwards; }
+.legendary.play .type-name { animation-delay: .55s; }
 /* 1.1: картина типа — полосой во всю ширину карты, под сутью типа; проявляется после имени */
 .type-art { position: relative; margin: .15rem -1.2rem 0; aspect-ratio: 2 / 1; overflow: hidden; background: linear-gradient(160deg, var(--card-2), var(--table-dim));
   border-block: 1px solid rgba(169, 130, 56, .38); }
@@ -667,9 +676,9 @@ body::after { background:
 .type-art.gone { display: none; }
 @media (min-width: 48rem) { .type-art { margin-inline: -2.1rem; aspect-ratio: 2.3 / 1; } }
 .legendary.armed:not(.play) .type-art { opacity: 0; }
-.legendary.play .type-art { animation: seal-title .9s 1.75s cubic-bezier(.2, .8, .2, 1) backwards; }
-.legendary.play .type-essence { animation-delay: 1.7s; }
-.legendary.play::after { animation: shine 1.8s 2s ease-out both; }
+.legendary.play .type-art { animation: seal-title .8s .8s cubic-bezier(.2, .8, .2, 1) backwards; }
+.legendary.play .type-essence { animation-delay: .68s; }
+.legendary.play::after { animation: shine 1.8s 1.2s ease-out both; }
 @keyframes seal-line { from { transform: scaleX(0); } }
 @keyframes seal-glint { from { fill: var(--ink); } 28% { fill: var(--accent); } }
 @keyframes seal-on { from { fill: var(--card-3); } 28% { fill: var(--accent-hi); } }
@@ -703,6 +712,9 @@ body::after { background:
 .ambience { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity 1.4s ease; }
 .ambience.on { opacity: 1; }
 .chapter-art.gone .ambience, .cover.gone .ambience { display: none; }
+/* подпись справа там, где слева внизу лица */
+.chapter-art[data-cap="right"]:not(.gone) .chapter-cap { align-items: flex-end; text-align: right; }
+.chapter-art[data-cap="right"]:not(.gone) .chapter-kicker { justify-content: flex-end; }
 </style>
 <header class="hud" id="hud" hidden></header>
 <main class="wrap" id="app" aria-live="polite"></main>
@@ -4578,8 +4590,10 @@ const portraitFor = (sex) => ageFor(sex, 6);
 const paintingSet = (name) => `img/${name}.webp 1024w, img/hd/${name}.webp 1536w`;
 // Где на картине лица (доля высоты для object-position): широкая рамка режет низ, а не головы.
 const FOCUS = { 'act-M-3': 2, 'act-F-3': 6, 'act-F-4': 10, 'end-M': 22, 'end-F': 2 };
+// подпись справа, над рекой: слева внизу на этих картинах лица (младший брат, лица в эпилоге)
+const CAP_RIGHT = new Set(['act-F-1', 'end-F']);
 const focusOf = (name) => FOCUS[name] ?? 12;
-const chapterArt = (sex, n) => ({ local: `img/${ART_PREFIX}act-${sex}-${n}.jpg`, set: paintingSet(`${ART_PREFIX}act-${sex}-${n}`), focus: focusOf(`act-${sex}-${n}`), remote: null });
+const chapterArt = (sex, n) => ({ local: `img/${ART_PREFIX}act-${sex}-${n}.jpg`, set: paintingSet(`${ART_PREFIX}act-${sex}-${n}`), focus: focusOf(`act-${sex}-${n}`), cap: CAP_RIGHT.has(`act-${sex}-${n}`) ? 'right' : null, remote: null });
 const COVER_ART = { local: 'img/cover.jpg', set: paintingSet('cover'), remote: null };
 /** Картины типов жизни (1.1): символическая сцена на тип, без лица героя, одна на него и на неё. Ключ — стихия и роль, например earth-IS.
  *  В списке только уже нарисованные: для остальных картины в карте типа нет. */
@@ -4588,7 +4602,7 @@ const typeArt = (quad, role) => (TYPE_ART.has(`${quad}-${role}`) ? { local: `img
 /** Те же картины маленькими для стола «Шестнадцать жизней» в финале: WebP 400 px, 1024 px для плотных экранов, JPEG запасной. */
 const typeThumb = (quad, role) => (TYPE_ART.has(`${quad}-${role}`) ? { local: `img/type-${quad}-${role}.jpg`, set: `img/sm/type-${quad}-${role}.webp 400w, img/type-${quad}-${role}.webp 1024w`, remote: null } : null);
 /** Эпилог: герой в старости, каким его запомнили (поздняя осень у него, ранняя весна у неё). */
-const endArt = (sex) => ({ local: `img/${ART_PREFIX}end-${sex}.jpg`, set: paintingSet(`${ART_PREFIX}end-${sex}`), focus: focusOf(`end-${sex}`), remote: null });
+const endArt = (sex) => ({ local: `img/${ART_PREFIX}end-${sex}.jpg`, set: paintingSet(`${ART_PREFIX}end-${sex}`), focus: focusOf(`end-${sex}`), cap: CAP_RIGHT.has(`end-${sex}`) ? 'right' : null, remote: null });
 /** Картинки для скачивания: [локальное имя без .jpg, id на сервере]. Локальные (LOCAL) скачивать неоткуда; в 1.0 это все. */
 const ART_FILES = [
   ...Object.entries(SCENE_ART).map(([key, id]) => [`${ART_PREFIX}${key}`, id]),
@@ -5259,7 +5273,8 @@ function typo(text) {
     const lastShort = i === parts.length - 1 && parts.length >= 5 && parts[i].length <= 7;
     out += (SHORT_WORD.test(parts[i - 1]) || GLUE_BEFORE.test(parts[i]) || lastShort ? '\u00A0' : ' ') + parts[i];
   }
-  return out;
+  // «где-то», «кое-что»: строка не рвётся на дефисе (незаметный знак-склейка после дефиса)
+  return out.replace(/([а-яё])-(то|либо|нибудь|ка|таки)(?![а-яё])/gi, '$1-\u2060$2').replace(/(^|[^а-яё])(кое|кой)-(?=[а-яё])/gi, '$1$2-\u2060');
 }
 
 const el = (tag, attrs = {}, ...kids) => {
@@ -5471,6 +5486,7 @@ function painting(src, alt, cls, sizes = SIZES.chapter) {
   if (paintings.get(src.local) === 'gone') return el('figure', { class: `${cls} gone` });
   const fig = picture(src, alt, cls, true, sizes);
   if (src.focus != null) fig.style.setProperty('--focus', `${src.focus}%`);
+  if (src.cap) fig.dataset.cap = src.cap;
   const img = fig.querySelector('img');
   img.addEventListener('load', () => paintings.set(src.local, 'ok'));
   // нет WebP — picture() сам откатится к JPEG; картины нет, только когда не нашёлся и он
@@ -6017,7 +6033,7 @@ function renderScene() {
       el('section', { class: grown ? 'card scene-card' : 'card scene-card deal' },
         sceneArt,
         el('div', { class: 'card-body' },
-          el('p', { class: 'card-meta' }, suitChip(sc.sphere), `Тебе ${sc.ageText}`),
+          el('p', { class: 'card-meta' }, suitChip(sc.sphere), `\u2060Тебе ${sc.ageText}`),
           el('h2', { class: 'scene-title' }, sc.title),
           el('div', { class: 'prose' }, sc.paragraphs.map((p) => el('p', {}, p))),
           sc.memory.length ? el('aside', { class: 'flashback' }, el('h3', { class: 'label' }, 'Это началось раньше'), sc.memory.map((m) => el('p', {}, m.text))) : null)),
@@ -6251,7 +6267,7 @@ function remember(at) {
       el('button', { class: 'memory-x', id: 'memory-close', 'aria-label': 'Закрыть', autofocus: true, onclick: close }, '×'),
       art(imageFor(j.img), `${j.title}, ${ageText(age)}`, j.sphere, { eager: true, sizes: SIZES.memory }),
       el('div', { class: 'card-body' },
-        el('p', { class: 'card-meta' }, suitChip(j.sphere), `Тебе ${ageText(age)} · карта ${i + 1} из ${n}`),
+        el('p', { class: 'card-meta' }, suitChip(j.sphere), `\u2060Тебе ${ageText(age)} · карта ${i + 1} из ${n}`),
         el('h2', { class: 'scene-title', id: 'memory-title' }, j.title),
         el('div', { class: 'deed' }, el('h3', { class: 'label' }, g('Что ты {сделал|сделала}')), el('p', {}, j.text)),
         el('p', { class: 'cost' }, j.cost),
@@ -6692,7 +6708,7 @@ function renderEnding() {
     ep.people.length ? el('section', { class: 'people-end' }, el('h3', { class: 'table-title' }, 'Что стало с людьми твоей жизни'),
       el('ul', { class: 'cast' }, ep.people.map((p) => el('li', { class: 'person' },
         personToken(p),
-        el('span', {}, el('b', {}, p.name), p.who ? el('span', { class: 'muted' }, `, ${p.who}`) : null, ` — ${p.status}`))))) : null,
+        el('span', {}, el('b', {}, p.name), p.who ? el('span', { class: 'muted' }, `, ${p.who}`) : null, ` — ${p.who && p.status.startsWith(`${p.who.split(' ')[0]}, `) ? p.status.slice(p.who.split(' ')[0].length + 2) : p.status}`))))) : null,
     lifeMap(ep.path),
     pathStrip(),
     el('details', { class: 'reveal', id: 'reveal' },
