@@ -3,8 +3,8 @@
 import { newGame, buildScene, applyChoice, acknowledge, isOver, pendingResult, buildEpilogue, ageText, ageOf, forkOf, sceneMap, yearsWord, TOTAL_EPISODES, START_OPTIONS } from '../core/engine.js';
 import { storage } from '../core/save.js';
 import { AGES, CHAPTERS } from '../data/life.js';
-import { imageFor, portraitFor, ageFor, hasFace, PORTRAIT_AGES, chapterArt, COVER_ART, endArt, typeArt, personArt } from '../data/images.js';
-import { QUAD_ORDER, ROLE_ORDER, QUAD_RU, ROLE_RU } from '../data/types.js';
+import { imageFor, portraitFor, ageFor, hasFace, PORTRAIT_AGES, chapterArt, COVER_ART, endArt, typeArt, typeThumb, personArt } from '../data/images.js';
+import { QUAD_ORDER, ROLE_ORDER, QUAD_RU, ROLE_RU, TYPES } from '../data/types.js';
 import { PATTERN_BY_N } from '../data/patterns.js';
 import { coords, bitString, glyph, line, hexNumber } from '../core/hexagram.js';
 
@@ -181,6 +181,7 @@ const SIZES = {
   hero: '(min-width: 48rem) 340px, calc(50vw - 24px)',
   strip: '(min-width: 40rem) 104px, 25vw',
   typeArt: '(min-width: 52rem) 828px, calc(100vw - 36px)',
+  lives: '(min-width: 52rem) 196px, calc(25vw - 12px)',
 };
 function picture(src, alt, cls, eager = false, sizes = SIZES.scene) {
   if (!src) return null;
@@ -481,6 +482,21 @@ function markSeen(key) {
   try { const s = seenSet(); if (!s.has(key)) { s.add(key); LS && LS.setItem(SEEN_KEY, JSON.stringify([...s])); } } catch { /* ignore */ }
 }
 const seenCount = (sex) => [...seenSet()].filter((k) => k.startsWith(sex)).length;
+
+// 1.1: типы жизней, прожитых на этом устройстве, — для стола «Шестнадцать жизней» в финале. Тоже только для игрока:
+// без хранилища на столе в цвете одна эта жизнь. Тип записывается один раз, повторная отрисовка того же финала ничего не меняет.
+const TYPES_KEY = 'prozhit-zhizn:types';
+const TYPE_KEYS = QUAD_ORDER.flatMap((q) => ROLE_ORDER.map((r) => `${q}-${r}`));
+function livedTypes(now) {
+  let list = [];
+  try { const v = JSON.parse((LS && LS.getItem(TYPES_KEY)) || '[]'); if (Array.isArray(v)) list = v; } catch { /* ignore */ }
+  const s = new Set(list.filter((k) => TYPE_KEYS.includes(k)));
+  if (!s.has(now)) {
+    s.add(now);
+    try { if (LS) LS.setItem(TYPES_KEY, JSON.stringify([...s])); } catch { /* ignore */ }
+  }
+  return s;
+}
 
 const scenesWord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'сцена' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'сцены' : 'сцен');
 
@@ -930,6 +946,64 @@ function album() {
           el('span', { class: 'album-title' }, j.title))));
       return head ? [head, card] : [card];
     })));
+}
+
+// Мягкий перенос в двух самых длинных словах имён типов: только для самых узких экранов, где слово целиком не входит в клетку стола.
+const SHY = '\u00AD';
+const BREAKS = { Первооткрыватель: 'Первооткры|ватель', закономерностей: 'законо|мерностей' };
+const softName = (name) => name.split(' ').map((w) => (BREAKS[w] ? BREAKS[w].replace('|', SHY) : w)).join(' ');
+const firstSentence = (text) => (text.match(/[^.!?]+[.!?]+(?:\s|$)/) || [text])[0].trim();
+
+/** 1.1: шестнадцать жизней — все картины типов столом 4 × 4: строки — стихии, столбцы — роли. Прожитые на этом устройстве
+ *  в цвете, ещё не прожитые приглушены, эта жизнь в золотом кольце. По нажатию под столом имя типа и первая фраза его портрета. */
+function livesTable(t) {
+  const now = `${t.quad}-${t.role}`;
+  const lived = livedTypes(now);
+  const cap = el('div', { class: 'lives-cap', 'aria-live': 'polite' });
+  const show = (q, r) => {
+    const k = `${q}-${r}`;
+    const mark = k === now ? ' · эта жизнь' : lived.has(k) ? ' · прожита раньше' : '';
+    cap.replaceChildren(
+      el('p', { class: 'lives-cap-k' }, `${QUAD_RU[q]} · ${ROLE_RU[r]}${mark}`),
+      el('p', { class: 'lives-cap-name' }, TYPES[q][r].name),
+      el('p', { class: 'lives-cap-text' }, firstSentence(g(TYPES[q][r].base))));
+  };
+  const cells = [];
+  const pick = (btn, q, r) => { for (const b of cells) b.setAttribute('aria-pressed', String(b === btn)); show(q, r); };
+  const grid = el('div', { class: 'lives-grid' }, QUAD_ORDER.flatMap((q, qi) => ROLE_ORDER.map((r, ri) => {
+    const k = `${q}-${r}`;
+    const name = TYPES[q][r].name;
+    const pic = typeThumb(q, r);
+    const img = pic ? el('img', { srcset: pic.set, sizes: SIZES.lives, src: pic.local, alt: name, width: '400', height: '267', loading: 'lazy', decoding: 'async' }) : null;
+    // браузер без WebP: назад к JPEG из src
+    if (img) img.addEventListener('error', () => { if (img.hasAttribute('srcset')) { img.removeAttribute('srcset'); img.removeAttribute('sizes'); } });
+    const cls = `life${k === now ? ' now' : ''}${lived.has(k) ? ' lived' : ''}`;
+    const btn = el('button', { type: 'button', class: cls, 'aria-pressed': String(k === now), 'aria-label': pic ? null : name, style: `--d:${qi + ri}` },
+      el('span', { class: 'life-pic' }, img, k === now ? el('span', { class: 'life-now' }, 'эта жизнь') : null),
+      el('span', { class: Math.max(...name.split(' ').map((w) => w.length)) >= 15 ? 'life-name long' : 'life-name', 'aria-hidden': 'true' }, softName(name)));
+    btn.addEventListener('click', () => pick(btn, q, r));
+    cells.push(btn);
+    return btn;
+  })));
+  show(t.quad, t.role);
+  return el('section', { class: 'lives', 'aria-labelledby': 'lives-title' },
+    el('h3', { class: 'table-title', id: 'lives-title' }, 'Шестнадцать жизней'),
+    el('p', { class: 'table-note' }, `Прожито ${lived.size} из 16`),
+    grid, cap);
+}
+/** Стол шестнадцати жизней проявляется волной, когда до него доходит прокрутка; при «меньше движения» стоит сразу. */
+function revealLives(sec) {
+  const grid = sec && sec.querySelector('.lives-grid');
+  if (!grid || calm() || typeof IntersectionObserver !== 'function') return;
+  sec.classList.add('armed');
+  const io = new IntersectionObserver((es) => {
+    if (!sec.isConnected) { io.disconnect(); return; }
+    const seen = es.some((e) => (e.isIntersecting && e.intersectionRatio > .2) || (e.rootBounds && e.boundingClientRect.bottom < e.rootBounds.top));
+    if (!seen) return;
+    io.disconnect();
+    sec.classList.add('play');
+  }, { threshold: [0, .2, 1] });
+  io.observe(grid);
 }
 
 /** Воспоминание: сыгранная карта целиком — картинка, поступок, цена и что было дальше. Листается кнопками, стрелками и свайпом. */
@@ -1384,6 +1458,7 @@ function renderEnding() {
           el('p', { class: 'type-note' }, 'Решения в 35–51 год считаются вдвое: это зрелость, главная часть жизни.')))),
     shareRow(t, ep),
     el('p', { class: 'table-text' }, ep.final.text),
+    livesTable(t),
     album(),
     ep.people.length ? el('section', { class: 'people-end' }, el('h3', { class: 'table-title' }, 'Что стало с людьми твоей жизни'),
       el('ul', { class: 'cast' }, ep.people.map((p) => el('li', { class: 'person' },
@@ -1405,6 +1480,7 @@ function renderEnding() {
     el('div', { class: 'actions' }, el('button', { class: 'btn-go', id: 'again', onclick: again }, 'Прожить другую жизнь')),
   ));
   revealSeal(root.querySelector('#type'));
+  revealLives(root.querySelector('.lives'));
   if (DEBUG) root.append(el('aside', { class: 'debug' }, el('h3', {}, 'Маршрут (JSON)'),
     el('textarea', { id: 'route-json', rows: '6', readonly: true }, JSON.stringify({ sex: state.sex, ids: state.journal.map((j) => j.choiceId) }))));
   keyHandler = null;

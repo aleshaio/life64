@@ -484,6 +484,52 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .album-ch-a { color: var(--table-dim); font-variant-numeric: tabular-nums; }
 .album-ch::after { content: ""; flex: 1 1 2rem; align-self: center; height: 1px; margin-left: .2rem; background: var(--table-line); }
 
+/* 1.1: шестнадцать жизней — все картины типов столом 4 × 4 (строки — стихии, столбцы — роли). Прожитые на этом устройстве
+   в цвете, ещё не прожитые приглушены, но хорошо видны: это картины, а не запертые двери. Эта жизнь — в золотом кольце.
+   Имя под картиной мелко, не больше двух строк; кегль на телефоне идёт от ширины клетки, чтобы длинные слова входили целиком. */
+.lives-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem 5px; }
+.life { display: flex; flex-direction: column; gap: .42rem; min-width: 0; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--table-dim); font: inherit; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.life-pic { position: relative; display: block; aspect-ratio: 3 / 2; border-radius: 7px; overflow: hidden; background: linear-gradient(160deg, var(--table-hi), var(--table-deep)); box-shadow: 0 1px 0 rgba(0, 0, 0, .12), 0 6px 14px var(--shade); transition: transform .2s ease, box-shadow .2s ease; }
+.life-pic img { display: block; width: 100%; height: 100%; object-fit: cover; transition: filter .35s ease, opacity .35s ease; }
+.life:not(.lived) .life-pic img { filter: grayscale(.6) brightness(.95); opacity: .75; }
+.life[aria-pressed="true"] .life-pic img { filter: none; opacity: 1; }
+.life-name { --fs: clamp(.56rem, calc(2.78vw - 1.3px), .84rem); display: block; font-size: var(--fs); font-weight: 600; line-height: 1.22; letter-spacing: -.01em; -webkit-hyphens: none; hyphens: none; overflow-wrap: anywhere; }
+/* в двух самых длинных именах слово в 15–16 букв: на телефоне кегль чуть меньше, чтобы оно стояло целиком, без переноса;
+   только на самых узких экранах (320 px) оно переносится по слогу, а не рвётся где придётся */
+.life-name.long { font-size: calc(var(--fs) * .93); }
+@media (max-width: 22.4rem) { .life-name.long { -webkit-hyphens: manual; hyphens: manual; } }
+.life.lived .life-name, .life[aria-pressed="true"] .life-name { color: var(--table-ink); }
+.life.now .life-name { color: var(--accent); }
+.life.now .life-pic { box-shadow: 0 0 0 1.5px var(--table), 0 0 0 3px var(--accent), 0 6px 14px var(--shade); }
+.life[aria-pressed="true"]:not(.now) .life-pic { box-shadow: 0 0 0 1.5px var(--table), 0 0 0 3px var(--table-dim), 0 6px 14px var(--shade); }
+.life-now { position: absolute; left: 3px; bottom: 3px; max-width: calc(100% - 6px); padding: .08rem .34rem .12rem; border-radius: 99px; background: rgba(20, 28, 31, .72); color: var(--accent-hi); font-size: .5rem; font-weight: 650; line-height: 1.25; white-space: nowrap; overflow: hidden; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.life:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+@media (hover: hover) {
+  .life:hover .life-pic { transform: translateY(-2px); }
+  .life:not(.lived):not([aria-pressed="true"]):hover .life-pic img { opacity: .86; filter: grayscale(.4); }
+}
+.life:active .life-pic { transform: translateY(1px); transition-duration: .08s; }
+.lives-cap { margin-top: 1.05rem; padding: .8rem 1rem .9rem; border-radius: 14px; background: var(--card); background-image: var(--grain); background-size: 180px 180px; color: var(--ink); box-shadow: var(--lift); }
+.lives-cap p { margin: 0; }
+.lives-cap-k { font-size: .8rem; font-weight: 500; color: var(--ink-dim); }
+.lives-cap .lives-cap-name { margin-top: .12rem; font-size: 1.1rem; font-weight: 700; line-height: 1.25; letter-spacing: -.015em; text-wrap: balance; }
+.lives-cap .lives-cap-text { margin-top: .3rem; max-width: 36em; font-size: 1rem; line-height: 1.5; }
+.lives-cap > * { animation: cap-in .35s ease backwards; }
+.lives.armed:not(.play) .life { opacity: 0; }
+.lives.play .life { animation: life-in .6s calc(var(--d, 0) * 60ms) cubic-bezier(.2, .8, .2, 1) backwards; }
+@keyframes life-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes cap-in { from { opacity: 0; } }
+@media (min-width: 40rem) {
+  .lives-grid { gap: 1.15rem .9rem; }
+  .life { gap: .55rem; border-radius: 12px; }
+  .life-name, .life-name.long { font-size: var(--fs); text-wrap: balance; }
+  .life-pic { border-radius: 11px; }
+  .life.now .life-pic { box-shadow: 0 0 0 2px var(--table), 0 0 0 4px var(--accent), 0 8px 18px var(--shade); }
+  .life[aria-pressed="true"]:not(.now) .life-pic { box-shadow: 0 0 0 2px var(--table), 0 0 0 4px var(--table-dim), 0 8px 18px var(--shade); }
+  .life-now { left: 7px; bottom: 7px; max-width: calc(100% - 14px); padding: .14rem .55rem .2rem; font-size: .7rem; }
+  .lives-cap { margin-top: 1.3rem; padding: 1rem 1.3rem 1.1rem; }
+}
+
 /* воспоминание: карта альбома целиком поверх стола */
 html:has(dialog.memory[open]) { overflow: hidden; }
 dialog.memory { width: min(44rem, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); margin: auto; padding: 0; border: 0; border-radius: var(--r-card); background: transparent; color: var(--ink); overflow: auto; overscroll-behavior: contain; }
