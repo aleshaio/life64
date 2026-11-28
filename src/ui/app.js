@@ -619,8 +619,9 @@ function renderStart() {
   const ch = saved && !isOver(saved) ? chapterAt(saved.episode) : null;
   if (ch) prefetch(chapterArt(saved.sex, ch.n));
   setTimeout(() => { if (!state) ['M', 'F'].forEach((sex) => prefetch(chapterArt(sex, 1))); }, 1500);
+  const cover = painting(COVER_ART, 'Город на большой реке в золотой час', 'cover', SIZES.cover);
   root.append(el('section', { class: 'start' },
-    painting(COVER_ART, 'Город на большой реке в золотой час', 'cover', SIZES.cover),
+    cover,
     // знак игры: солнце гексаграммы 64, медаль на нижнем крае обложки
     el('span', { class: 'logo-slot' }, startMark()),
     el('p', { class: 'eyebrow' }, '16 решений · от 6 до 84 лет'),
@@ -636,6 +637,7 @@ function renderStart() {
       hero('M', 'Его жизнь', 'Мальчик из Заречья: гаражи, река, моторы'),
       hero('F', 'Её жизнь', 'Девочка из Слободы: брат, подруга, больница')),
   ));
+  ambience(cover, 2); // золотой час над городом: тёплые пылинки и пух поднимаются в свете
 }
 
 /** На компьютере при наведении лицо на карте героя взрослеет: шесть возрастов по кругу. Слои старших лиц грузятся при первом наведении. */
