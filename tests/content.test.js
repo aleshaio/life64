@@ -153,11 +153,11 @@ test('у каждой сцены есть иллюстрация; локальн
 });
 
 test('1.1: лицо героя есть в каждом возрасте жизни, и у всех картинок есть WebP из srcset', async () => {
-  const { ageFor, hasFace, imageFor, chapterArt, COVER_ART, endArt } = await import('../src/data/images.js');
+  const { ageFor, hasFace, imageFor, chapterArt, COVER_ART, endArt, TYPE_ART, typeArt } = await import('../src/data/images.js');
   const { AGES } = await import('../src/data/life.js');
   const { existsSync } = await import('node:fs');
   const files = (pic) => [pic.local, ...pic.set.split(',').map((c) => c.trim().split(/\s+/)[0])];
-  const pics = [COVER_ART];
+  const pics = [COVER_ART, ...[...TYPE_ART].map((k) => typeArt(...k.split('-')))];
   for (const sex of SEXES) {
     for (const a of AGES) { assert.ok(hasFace(sex, a), `нет портрета ${sex} ${a}`); pics.push(ageFor(sex, a)); }
     for (let n = 1; n <= 4; n++) pics.push(chapterArt(sex, n));
