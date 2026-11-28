@@ -524,6 +524,82 @@ dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* 1.1: фактура и финал */
+/* Бумага карт — едва заметное зерно (статичная картинка-шум поверх цвета карты, около 3–4 %), без фильтров на самих
+   элементах и без сдвигов вёрстки. Стол — мягкая виньетка к краям и такой же тихий шум: глубина и нет полос в градиентах. */
+:root {
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' seed='4' stitchTiles='stitch' result='n'/%3E%3CfeColorMatrix in='n' result='d' values='0 0 0 0 0.3 0 0 0 0 0.24 0 0 0 0 0.17 2.6 0 0 0 -1.404'/%3E%3CfeColorMatrix in='n' result='l' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -2.6 0 0 0 1.196'/%3E%3CfeMerge%3E%3CfeMergeNode in='d'/%3E%3CfeMergeNode in='l'/%3E%3C/feMerge%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.1'/%3E%3C/svg%3E");
+  --grain-table: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' seed='4' stitchTiles='stitch' result='n'/%3E%3CfeColorMatrix in='n' result='d' values='0 0 0 0 0 0 0 0 0 0.02 0 0 0 0 0.03 2.6 0 0 0 -1.430'/%3E%3CfeColorMatrix in='n' result='l' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -2.6 0 0 0 1.170'/%3E%3CfeMerge%3E%3CfeMergeNode in='d'/%3E%3CfeMergeNode in='l'/%3E%3C/feMerge%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.05'/%3E%3C/svg%3E");
+}
+.card, .choice, .hero-card, .album-card, .legendary-in, .person, .age-card, .mini.open, .dc,
+.flashback, .outcome, .axis-card { background-image: var(--grain); background-size: 180px 180px; }
+body::after { background:
+  var(--grain-table) 0 0 / 180px 180px,
+  radial-gradient(110% 55% at 50% -12%, var(--table-hi), transparent 62%),
+  radial-gradient(ellipse farthest-corner at 50% 36%, transparent 46%, rgba(4, 8, 10, .34) 100%); }
+
+/* итог по И-Цзин в карте типа: гексаграмма жизни, её имя и место среди 64 */
+.seal { display: flex; align-items: center; gap: .9rem; padding-bottom: 1.05rem; border-bottom: 1px solid var(--line); }
+.seal-hex { flex: none; color: var(--ink); }
+.seal-hex .hex { width: 2.25rem; height: auto; aspect-ratio: 20 / 23; }
+.seal-text { margin: 0; display: flex; flex-direction: column; gap: .12rem; min-width: 0; line-height: 1.25; }
+.seal-k { font-size: .84rem; font-weight: 500; color: var(--ink-dim); }
+.seal-n { font-size: 1.02rem; font-weight: 650; letter-spacing: -.01em; color: var(--ink); text-wrap: balance; }
+.seal-map { flex: none; margin: 0 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+.map64 { display: block; width: 2.7rem; height: 2.7rem; }
+.map64 rect { fill: var(--card-3); }
+.map64 .on { fill: var(--accent); }
+.seal-map figcaption { max-width: 4.2rem; font-size: .68rem; line-height: 1.2; text-align: center; color: var(--ink-dim); }
+@media (min-width: 48rem) {
+  .seal { gap: 1.1rem; }
+  .seal-hex .hex { width: 2.6rem; }
+  .seal-n { font-size: 1.1rem; }
+  .seal-map { flex-direction: row; gap: .65rem; }
+  .seal-map figcaption { order: -1; max-width: none; white-space: nowrap; font-size: .78rem; }
+  .map64 { width: 3rem; height: 3rem; }
+}
+/* раскрытие: черты ложатся снизу вверх (сплошная — от середины, прерванная — двумя половинами от середины к краям),
+   черта последнего решения вспыхивает, загорается клетка среди 64, проявляется тип, по рамке проходит блик */
+.seal-hex rect { transform-box: fill-box; transform-origin: 50% 50%; }
+.seal-hex rect.half-l { transform-origin: 100% 50%; }
+.seal-hex rect.half-r { transform-origin: 0 50%; }
+.legendary.armed:not(.play) .seal-hex rect { transform: scaleX(0); }
+.legendary.armed:not(.play) :is(.type-kicker, .type-name, .type-essence) { opacity: 0; }
+.legendary.armed::after { animation: none; }
+.legendary.play .seal-hex rect { animation: seal-line .17s calc(.15s + var(--l) * .16s) cubic-bezier(.3, .6, .3, 1) backwards; }
+.legendary.play .seal-hex rect.hl { animation: seal-line .17s calc(.15s + var(--l) * .16s) cubic-bezier(.3, .6, .3, 1) backwards, seal-glint 1s 1.2s ease-out backwards; }
+.legendary.play .map64 .on { animation: seal-on 1s 1.2s ease-out backwards; }
+.legendary.play :is(.type-kicker, .type-name, .type-essence) { animation: seal-title .7s 1.45s cubic-bezier(.2, .8, .2, 1) backwards; }
+.legendary.play .type-name { animation-delay: 1.55s; }
+.legendary.play .type-essence { animation-delay: 1.7s; }
+.legendary.play::after { animation: shine 1.8s 2s ease-out both; }
+@keyframes seal-line { from { transform: scaleX(0); } }
+@keyframes seal-glint { from { fill: var(--ink); } 28% { fill: var(--accent); } }
+@keyframes seal-on { from { fill: var(--card-3); } 28% { fill: var(--accent-hi); } }
+@keyframes seal-title { from { opacity: 0; transform: translateY(8px); } }
+
+/* отклик: карты и кнопки мягко приподнимаются под курсором и чуть оседают при нажатии; кольцо фокуса — акцент
+   (на бумаге — тёмный акцент, чтобы кольцо было видно) */
+@media (hover: hover) {
+  .btn-go:hover:not(:active) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--accent-deep), 0 16px 28px var(--shade); }
+  .btn-soft:hover { background-color: var(--table-hi); }
+  .link:hover { color: var(--table-ink); }
+  .link.danger:hover { color: var(--danger); text-decoration-thickness: 2px; }
+  .memory-x:hover { background: rgba(20, 28, 31, .84); }
+  .type-more summary:hover { color: var(--accent-deep); }
+  .reveal summary:hover { color: var(--accent-hi); }
+}
+.btn-go { transition: transform .14s ease, box-shadow .14s ease, filter .14s ease; }
+.btn-go:active { transition-duration: .06s; }
+.btn-soft { transition: border-color .15s ease, color .15s ease, background-color .15s ease, transform .1s ease; }
+.choice:active:not(.picked):not(.dropped) { box-shadow: 0 1px 0 rgba(0, 0, 0, .12), 0 6px 16px var(--shade); transition-duration: .08s; }
+.hero-card:active, .album-card:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0, 0, 0, .12), 0 6px 16px var(--shade); transition-duration: .08s; }
+.nav-btn { transition: background-color .15s ease, transform .1s ease; }
+.nav-btn:not([disabled]):active, .reel-btn:active, .memory-x:active { transform: translateY(1px); }
+.type-more summary, .reveal summary { transition: color .15s ease; }
+.nav-btn:focus-visible, .type-more summary:focus-visible { outline-color: var(--accent-deep); }
+.choice:focus-visible, .hero-card:focus-visible, .album-card:focus-visible { outline-offset: 4px; }
 </style>
 <header class="hud" id="hud" hidden></header>
 <main class="wrap" id="app" aria-live="polite"></main>
@@ -5124,14 +5200,64 @@ function hexGlyph(bits, hl, label) {
   svg.append(t);
   for (let l = 1; l <= 6; l++) {
     const y = (20.8 - (l - 1) * 4.16).toFixed(2);
-    for (const [x, w] of line(bits, l) ? [[0, 20]] : [[0, 7.8], [12.2, 7.8]]) {
+    // у прерванной черты две половины: левая и правая (финал строит их от середины к краям)
+    for (const [x, w, half] of line(bits, l) ? [[0, 20, '']] : [[0, 7.8, 'half-l'], [12.2, 7.8, 'half-r']]) {
       const r = document.createElementNS(NS, 'rect');
       r.setAttribute('x', x); r.setAttribute('y', y); r.setAttribute('width', w); r.setAttribute('height', '2.2'); r.setAttribute('rx', '.4');
-      if (l === hl) r.setAttribute('class', 'hl');
+      const cls = [l === hl ? 'hl' : '', half].filter(Boolean).join(' ');
+      if (cls) r.setAttribute('class', cls);
+      r.style.setProperty('--l', l - 1); // номер черты снизу: по нему черты ложатся по очереди
       svg.append(r);
     }
   }
   return svg;
+}
+
+/** Шестьдесят четыре гексаграммы квадратом 8×8 (столбец — нижняя триграмма, строка — верхняя): клетка этой жизни светится. */
+function sixtyFour(bits) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const { x: cx, y: cy } = coords(bits);
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 64 64');
+  svg.setAttribute('class', 'map64');
+  svg.setAttribute('aria-hidden', 'true');
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+    const on = x === cx && y === cy;
+    const r = document.createElementNS(NS, 'rect');
+    const s = on ? 6 : 3.4, o = (8 - s) / 2;
+    r.setAttribute('x', x * 8 + o); r.setAttribute('y', (7 - y) * 8 + o); r.setAttribute('width', s); r.setAttribute('height', s); r.setAttribute('rx', on ? 1.4 : 1);
+    if (on) r.setAttribute('class', 'on');
+    svg.append(r);
+  }
+  return svg;
+}
+
+/** Печать итога в карте типа: гексаграмма жизни, её номер и имя, её место среди шестидесяти четырёх.
+ *  Черта последнего решения выделена. Как печать проявляется — см. revealSeal. */
+function seal(n, hl) {
+  return el('div', { class: 'seal' },
+    el('div', { class: 'seal-hex', 'aria-hidden': 'true' }, hexGlyph(state.bits, hl, '')),
+    el('p', { class: 'seal-text' }, el('span', { class: 'seal-k' }, 'Итог по И-Цзин'), ' ', el('span', { class: 'seal-n' }, hexName(n))),
+    el('figure', { class: 'seal-map', role: 'img', 'aria-label': `№${n} — одна из 64 гексаграмм` }, sixtyFour(state.bits),
+      el('figcaption', { 'aria-hidden': 'true' }, 'Одна из 64 жизней')));
+}
+
+/** Когда печать впервые видна целиком, черты ложатся по одной снизу вверх (так строится гексаграмма),
+ *  черта последнего решения вспыхивает, клетка жизни среди 64 загорается, потом проявляется тип.
+ *  Один раз; при «меньше движения» всё видно сразу и без движения. */
+function revealSeal(card) {
+  const mark = card && card.querySelector('.seal');
+  if (!mark || calm() || typeof IntersectionObserver !== 'function') return;
+  card.classList.add('armed');
+  const io = new IntersectionObserver((es) => {
+    if (!card.isConnected) { io.disconnect(); return; }
+    // видна целиком — или её быстро пролистали вверх: тогда тип не остаётся спрятанным
+    const seen = es.some((e) => (e.isIntersecting && e.intersectionRatio > .98) || (e.rootBounds && e.boundingClientRect.bottom < e.rootBounds.top));
+    if (!seen) return;
+    io.disconnect();
+    card.classList.add('play');
+  }, { threshold: [0, 1], rootMargin: '0px 0px -10% 0px' });
+  io.observe(mark);
 }
 const hexName = (n) => `№${n} «${PATTERN_BY_N[n].motif}»`;
 const ORDINAL = ['первая', 'вторая', 'третья', 'четвёртая', 'пятая', 'шестая'];
@@ -6052,6 +6178,7 @@ function renderEnding() {
     agesStrip(state.sex),
     el('section', { class: 'legendary deal', id: 'type', style: '--i:2' },
       el('div', { class: 'legendary-in' },
+        seal(ep.final.hex, lastJ.line),
         el('p', { class: 'type-kicker' }, g('Ты {прожил|прожила} эту жизнь как')),
         el('h2', { class: Math.max(...t.name.split(/\s+/).map((w) => w.length)) > 10 ? 'type-name long' : 'type-name' }, t.name),
         el('p', { class: 'type-essence' }, t.essence),
@@ -6100,6 +6227,7 @@ function renderEnding() {
       el('div', { class: 'final-hex' }, hexGlyph(state.bits, lastJ.line, `Финальная гексаграмма ${hexName(ep.final.hex)}`))),
     el('div', { class: 'actions' }, el('button', { class: 'btn-go', id: 'again', onclick: again }, 'Прожить другую жизнь')),
   ));
+  revealSeal(root.querySelector('#type'));
   if (DEBUG) root.append(el('aside', { class: 'debug' }, el('h3', {}, 'Маршрут (JSON)'),
     el('textarea', { id: 'route-json', rows: '6', readonly: true }, JSON.stringify({ sex: state.sex, ids: state.journal.map((j) => j.choiceId) }))));
   keyHandler = null;

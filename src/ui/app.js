@@ -84,14 +84,64 @@ function hexGlyph(bits, hl, label) {
   svg.append(t);
   for (let l = 1; l <= 6; l++) {
     const y = (20.8 - (l - 1) * 4.16).toFixed(2);
-    for (const [x, w] of line(bits, l) ? [[0, 20]] : [[0, 7.8], [12.2, 7.8]]) {
+    // у прерванной черты две половины: левая и правая (финал строит их от середины к краям)
+    for (const [x, w, half] of line(bits, l) ? [[0, 20, '']] : [[0, 7.8, 'half-l'], [12.2, 7.8, 'half-r']]) {
       const r = document.createElementNS(NS, 'rect');
       r.setAttribute('x', x); r.setAttribute('y', y); r.setAttribute('width', w); r.setAttribute('height', '2.2'); r.setAttribute('rx', '.4');
-      if (l === hl) r.setAttribute('class', 'hl');
+      const cls = [l === hl ? 'hl' : '', half].filter(Boolean).join(' ');
+      if (cls) r.setAttribute('class', cls);
+      r.style.setProperty('--l', l - 1); // номер черты снизу: по нему черты ложатся по очереди
       svg.append(r);
     }
   }
   return svg;
+}
+
+/** Шестьдесят четыре гексаграммы квадратом 8×8 (столбец — нижняя триграмма, строка — верхняя): клетка этой жизни светится. */
+function sixtyFour(bits) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const { x: cx, y: cy } = coords(bits);
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 64 64');
+  svg.setAttribute('class', 'map64');
+  svg.setAttribute('aria-hidden', 'true');
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+    const on = x === cx && y === cy;
+    const r = document.createElementNS(NS, 'rect');
+    const s = on ? 6 : 3.4, o = (8 - s) / 2;
+    r.setAttribute('x', x * 8 + o); r.setAttribute('y', (7 - y) * 8 + o); r.setAttribute('width', s); r.setAttribute('height', s); r.setAttribute('rx', on ? 1.4 : 1);
+    if (on) r.setAttribute('class', 'on');
+    svg.append(r);
+  }
+  return svg;
+}
+
+/** Печать итога в карте типа: гексаграмма жизни, её номер и имя, её место среди шестидесяти четырёх.
+ *  Черта последнего решения выделена. Как печать проявляется — см. revealSeal. */
+function seal(n, hl) {
+  return el('div', { class: 'seal' },
+    el('div', { class: 'seal-hex', 'aria-hidden': 'true' }, hexGlyph(state.bits, hl, '')),
+    el('p', { class: 'seal-text' }, el('span', { class: 'seal-k' }, 'Итог по И-Цзин'), ' ', el('span', { class: 'seal-n' }, hexName(n))),
+    el('figure', { class: 'seal-map', role: 'img', 'aria-label': `№${n} — одна из 64 гексаграмм` }, sixtyFour(state.bits),
+      el('figcaption', { 'aria-hidden': 'true' }, 'Одна из 64 жизней')));
+}
+
+/** Когда печать впервые видна целиком, черты ложатся по одной снизу вверх (так строится гексаграмма),
+ *  черта последнего решения вспыхивает, клетка жизни среди 64 загорается, потом проявляется тип.
+ *  Один раз; при «меньше движения» всё видно сразу и без движения. */
+function revealSeal(card) {
+  const mark = card && card.querySelector('.seal');
+  if (!mark || calm() || typeof IntersectionObserver !== 'function') return;
+  card.classList.add('armed');
+  const io = new IntersectionObserver((es) => {
+    if (!card.isConnected) { io.disconnect(); return; }
+    // видна целиком — или её быстро пролистали вверх: тогда тип не остаётся спрятанным
+    const seen = es.some((e) => (e.isIntersecting && e.intersectionRatio > .98) || (e.rootBounds && e.boundingClientRect.bottom < e.rootBounds.top));
+    if (!seen) return;
+    io.disconnect();
+    card.classList.add('play');
+  }, { threshold: [0, 1], rootMargin: '0px 0px -10% 0px' });
+  io.observe(mark);
 }
 const hexName = (n) => `№${n} «${PATTERN_BY_N[n].motif}»`;
 const ORDINAL = ['первая', 'вторая', 'третья', 'четвёртая', 'пятая', 'шестая'];
@@ -1012,6 +1062,7 @@ function renderEnding() {
     agesStrip(state.sex),
     el('section', { class: 'legendary deal', id: 'type', style: '--i:2' },
       el('div', { class: 'legendary-in' },
+        seal(ep.final.hex, lastJ.line),
         el('p', { class: 'type-kicker' }, g('Ты {прожил|прожила} эту жизнь как')),
         el('h2', { class: Math.max(...t.name.split(/\s+/).map((w) => w.length)) > 10 ? 'type-name long' : 'type-name' }, t.name),
         el('p', { class: 'type-essence' }, t.essence),
@@ -1060,6 +1111,7 @@ function renderEnding() {
       el('div', { class: 'final-hex' }, hexGlyph(state.bits, lastJ.line, `Финальная гексаграмма ${hexName(ep.final.hex)}`))),
     el('div', { class: 'actions' }, el('button', { class: 'btn-go', id: 'again', onclick: again }, 'Прожить другую жизнь')),
   ));
+  revealSeal(root.querySelector('#type'));
   if (DEBUG) root.append(el('aside', { class: 'debug' }, el('h3', {}, 'Маршрут (JSON)'),
     el('textarea', { id: 'route-json', rows: '6', readonly: true }, JSON.stringify({ sex: state.sex, ids: state.journal.map((j) => j.choiceId) }))));
   keyHandler = null;
