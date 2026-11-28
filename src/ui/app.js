@@ -245,6 +245,7 @@ function painting(src, alt, cls, sizes = SIZES.chapter) {
   if (src.focus != null) fig.style.setProperty('--focus', `${src.focus}%`);
   if (src.cap) fig.dataset.cap = src.cap;
   const img = fig.querySelector('img');
+  img.decoding = 'sync'; // иначе картина из кэша появляется рывком уже после перехода, позже своей подписи
   img.addEventListener('load', () => paintings.set(src.local, 'ok'));
   // нет WebP — picture() сам откатится к JPEG; картины нет, только когда не нашёлся и он
   img.addEventListener('error', () => { if (fig.classList.contains('gone')) paintings.set(src.local, 'gone'); });
@@ -995,8 +996,8 @@ function livesTable(t) {
     grid, cap);
 }
 /** Стол шестнадцати жизней проявляется волной, когда до него доходит прокрутка; при «меньше движения» стоит сразу. */
-function revealLives(sec) {
-  const grid = sec && sec.querySelector('.lives-grid');
+function revealLives(sec, sel = '.lives-grid') {
+  const grid = sec && sec.querySelector(sel);
   if (!grid || calm() || typeof IntersectionObserver !== 'function') return;
   sec.classList.add('armed');
   const io = new IntersectionObserver((es) => {
@@ -1040,6 +1041,7 @@ function remember(at) {
     if (k < 0 || k >= n) return;
     const keep = document.activeElement && dlg.contains(document.activeElement) ? document.activeElement.id : null;
     i = k;
+    dlg.classList.add('paged');
     show();
     const b = keep && document.getElementById(keep);
     (b && !b.disabled ? b : dlg.querySelector('.memory-x')).focus();
@@ -1488,6 +1490,7 @@ function renderEnding() {
   ));
   revealSeal(root.querySelector('#type'));
   revealLives(root.querySelector('.lives'));
+  revealLives(root.querySelector('.ages'), '.ages-row');
   if (DEBUG) root.append(el('aside', { class: 'debug' }, el('h3', {}, 'Маршрут (JSON)'),
     el('textarea', { id: 'route-json', rows: '6', readonly: true }, JSON.stringify({ sex: state.sex, ids: state.journal.map((j) => j.choiceId) }))));
   keyHandler = null;

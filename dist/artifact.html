@@ -542,6 +542,7 @@ td .td-sub { display: block; margin-top: .1rem; font-size: .92em; }
 .lives-cap .lives-cap-text { margin-top: .3rem; max-width: 36em; font-size: 1rem; line-height: 1.5; }
 .lives-cap > * { animation: cap-in .35s ease backwards; }
 .lives.armed:not(.play) .life { opacity: 0; }
+.ages.armed:not(.play) .age-card { animation: none; opacity: 0; }
 .lives.play .life { animation: life-in .6s calc(var(--d, 0) * 60ms) cubic-bezier(.2, .8, .2, 1) backwards; }
 @keyframes life-in { from { opacity: 0; transform: translateY(8px); } }
 @keyframes cap-in { from { opacity: 0; } }
@@ -558,9 +559,10 @@ td .td-sub { display: block; margin-top: .1rem; font-size: .92em; }
 
 /* воспоминание: карта альбома целиком поверх стола */
 html:has(dialog.memory[open]) { overflow: hidden; }
-dialog.memory { width: min(44rem, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); margin: auto; padding: 0; border: 0; border-radius: var(--r-card); background: transparent; color: var(--ink); overflow: auto; overscroll-behavior: contain; }
+dialog.memory { --mt: max(12px, calc((100dvh - 56rem) / 2)); width: min(44rem, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - var(--mt) - 12px); margin: var(--mt) auto auto; padding: 0; border: 0; border-radius: var(--r-card); background: transparent; color: var(--ink); overflow: auto; overscroll-behavior: contain; }
 dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
 .memory[open] .memory-card { animation: deal .32s cubic-bezier(.2, .8, .2, 1) backwards; }
+.memory.paged[open] .memory-card { animation: none; }
 .memory-card { position: relative; overflow: hidden; overflow: clip; } /* clip, а не hidden: так кнопки ниже могут прилипнуть к низу окна */
 .memory-x { position: absolute; top: .6rem; right: .6rem; z-index: 2; width: 2.6rem; height: 2.6rem; display: grid; place-items: center; padding: 0 0 .15rem; border: 0; border-radius: 50%; background: rgba(20, 28, 31, .66); color: var(--table-ink); font: inherit; font-size: 1.6rem; line-height: 1; cursor: pointer; }
 .deed p { margin: 0; font-size: 1.08rem; font-weight: 600; line-height: 1.45; }
@@ -616,8 +618,8 @@ dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
 
 /* смена экранов (View Transitions): экран мягко сменяется, сыгранная карта переворачивается и становится итогом,
    следующая карта вырастает в сцену, лицо в табло взрослеет постепенно */
-::view-transition-old(root) { animation: vt-out .24s ease both; }
-::view-transition-new(root) { animation: vt-rise .42s cubic-bezier(.2, .8, .2, 1) both; }
+::view-transition-old(root) { animation: vt-out .14s ease both; }
+::view-transition-new(root) { animation: vt-rise .42s .08s cubic-bezier(.2, .8, .2, 1) both; }
 ::view-transition-group(played) { animation-duration: .66s; animation-timing-function: cubic-bezier(.32, .72, .2, 1); }
 ::view-transition-image-pair(played) { perspective: 1800px; }
 ::view-transition-old(played) { animation: vt-turn-away .33s cubic-bezier(.55, 0, .85, .45) both; backface-visibility: hidden; mix-blend-mode: normal; }
@@ -626,9 +628,9 @@ dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
 ::view-transition-old(next), ::view-transition-new(next) { height: 100%; object-fit: cover; }
 ::view-transition-old(next) { animation: vt-out .45s ease both; }
 ::view-transition-new(next) { animation: vt-in .3s ease both; }
-::view-transition-group(face) { animation-duration: .9s; animation-timing-function: cubic-bezier(.3, .7, .2, 1); }
-::view-transition-old(face) { animation: vt-out .9s ease both; }
-::view-transition-new(face) { animation: vt-in .9s ease both; }
+::view-transition-group(face) { animation-duration: .6s; animation-timing-function: cubic-bezier(.3, .7, .2, 1); }
+::view-transition-old(face) { animation: vt-out .6s ease both; }
+::view-transition-new(face) { animation: vt-in .6s ease both; }
 @keyframes vt-out { to { opacity: 0; } }
 @keyframes vt-in { from { opacity: 0; } }
 @keyframes vt-rise { from { opacity: 0; transform: translateY(12px); } }
@@ -5507,6 +5509,7 @@ function painting(src, alt, cls, sizes = SIZES.chapter) {
   if (src.focus != null) fig.style.setProperty('--focus', `${src.focus}%`);
   if (src.cap) fig.dataset.cap = src.cap;
   const img = fig.querySelector('img');
+  img.decoding = 'sync'; // иначе картина из кэша появляется рывком уже после перехода, позже своей подписи
   img.addEventListener('load', () => paintings.set(src.local, 'ok'));
   // нет WebP — picture() сам откатится к JPEG; картины нет, только когда не нашёлся и он
   img.addEventListener('error', () => { if (fig.classList.contains('gone')) paintings.set(src.local, 'gone'); });
@@ -6257,8 +6260,8 @@ function livesTable(t) {
     grid, cap);
 }
 /** Стол шестнадцати жизней проявляется волной, когда до него доходит прокрутка; при «меньше движения» стоит сразу. */
-function revealLives(sec) {
-  const grid = sec && sec.querySelector('.lives-grid');
+function revealLives(sec, sel = '.lives-grid') {
+  const grid = sec && sec.querySelector(sel);
   if (!grid || calm() || typeof IntersectionObserver !== 'function') return;
   sec.classList.add('armed');
   const io = new IntersectionObserver((es) => {
@@ -6302,6 +6305,7 @@ function remember(at) {
     if (k < 0 || k >= n) return;
     const keep = document.activeElement && dlg.contains(document.activeElement) ? document.activeElement.id : null;
     i = k;
+    dlg.classList.add('paged');
     show();
     const b = keep && document.getElementById(keep);
     (b && !b.disabled ? b : dlg.querySelector('.memory-x')).focus();
@@ -6750,6 +6754,7 @@ function renderEnding() {
   ));
   revealSeal(root.querySelector('#type'));
   revealLives(root.querySelector('.lives'));
+  revealLives(root.querySelector('.ages'), '.ages-row');
   if (DEBUG) root.append(el('aside', { class: 'debug' }, el('h3', {}, 'Маршрут (JSON)'),
     el('textarea', { id: 'route-json', rows: '6', readonly: true }, JSON.stringify({ sex: state.sex, ids: state.journal.map((j) => j.choiceId) }))));
   keyHandler = null;
