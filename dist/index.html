@@ -85,6 +85,14 @@ body { margin: 0; min-height: 100vh; padding-top: env(safe-area-inset-top, 0px);
 p, li { text-wrap: pretty; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--table); }
 body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(110% 55% at 50% -12%, var(--table-hi), transparent 62%); }
+/* 1.1: время года главы чуть подкрашивает свет над столом: весна, лето, осень, зима */
+@property --season { syntax: '<color>'; inherits: true; initial-value: rgba(0, 0, 0, 0); }
+body { --season: rgba(0, 0, 0, 0); transition: --season 1.8s ease; }
+body[data-season="1"] { --season: rgba(150, 205, 165, .085); }
+body[data-season="2"] { --season: rgba(240, 196, 112, .085); }
+body[data-season="3"] { --season: rgba(226, 132, 66, .095); }
+body[data-season="4"] { --season: rgba(150, 188, 236, .095); }
+@media (prefers-reduced-motion: reduce) { body { transition: none; } }
 .wrap { width: 100%; max-width: 76rem; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 main.wrap { padding-block: 1.1rem 3rem; }
 img { max-width: 100%; }
@@ -121,6 +129,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .seg { position: relative; height: 4px; border-radius: 99px; background: var(--table-line); }
 .seg.done { background: var(--table-mid); }
 .seg.now { background: var(--accent); }
+/* главы: между четвёрками возрастов зазор чуть шире */
+.seg:nth-child(4n + 1):not(:first-child) { margin-left: 4px; }
 .seg-age { display: none; }
 @media (max-width: 25.5rem) {
   .hud-in { gap: .5rem; }
@@ -362,6 +372,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .portrait.ready img.age-layer { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease; }
 .portrait.ready img.age-layer.on { opacity: 1; }
 .portrait.ready img.age-layer.cut { transition: none; }
+.hero-card.many .portrait.ready img.age-layer { transition-duration: .45s; }
 .age-badge { position: absolute; left: .65rem; bottom: .65rem; padding: .22rem .6rem; border-radius: 99px; background: rgba(20, 28, 31, .72); color: var(--table-ink); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0; transition: opacity .3s ease; pointer-events: none; }
 .hero-card.aging .age-badge { opacity: 1; }
 .portrait.gone { background: radial-gradient(ellipse 15% 12% at 50% 52%, var(--silhouette) 0 96%, transparent 100%), radial-gradient(ellipse 38% 26% at 50% 100%, var(--silhouette) 0 97%, transparent 100%), linear-gradient(160deg, var(--card-2), var(--table-dim)); }
@@ -380,6 +391,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .age-card { margin: 0; background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: var(--lift); }
 .age-card .portrait { border-radius: 0; }
 .age-num { display: block; padding: .35rem .2rem .45rem; text-align: center; font-weight: 600; font-size: .85rem; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* 1.1: шестнадцать лиц — восемь в ряд, на телефоне четыре */
+.ages-row.all { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: .45rem; }
+.ages-row.all .age-card { border-radius: 10px; }
+.ages-row.all .age-num { padding: .28rem .1rem .34rem; font-size: .8rem; }
 .legendary { position: relative; padding: 2px; border-radius: var(--r-card); background: linear-gradient(135deg, var(--accent-hi), var(--accent) 40%, var(--accent-deep) 70%, var(--accent-hi)); box-shadow: var(--lift); overflow: hidden; }
 .legendary::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(100deg, transparent 35%, var(--accent-hi) 50%, transparent 65%); opacity: .45; transform: translateX(-110%); animation: shine 2s .6s ease-out both; }
 .legendary-in { position: relative; border-radius: calc(var(--r-card) - 2px); background: var(--card); color: var(--ink); padding: 1.4rem 1.2rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
@@ -446,6 +461,7 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ending .actions { display: flex; justify-content: center; }
 @media (max-width: 40rem) {
   .ages-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ages-row.all { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .cell { font-size: .58rem; padding: .25rem .15rem; }
   .map-row { grid-template-columns: 1.6rem repeat(4, minmax(0, 1fr)); }
   .map-h span { display: none; }
@@ -569,6 +585,7 @@ dialog.memory::backdrop { background: rgba(8, 13, 15, .8); }
 .flashback, .outcome, .axis-card { background-image: var(--grain); background-size: 180px 180px; }
 body::after { background:
   var(--grain-table) 0 0 / 180px 180px,
+  radial-gradient(130% 80% at 50% 6%, var(--season), transparent 72%),
   radial-gradient(110% 55% at 50% -12%, var(--table-hi), transparent 62%),
   radial-gradient(ellipse farthest-corner at 50% 36%, transparent 46%, rgba(4, 8, 10, .34) 100%); }
 
@@ -4480,26 +4497,16 @@ const SCENE_ART = {
   'F16-2': LOCAL,
   'F16-3': LOCAL,
 };
-/** Портреты по возрастам: по ним рисовались сцены. Первый (6 лет) — на стартовом экране, вся лента — в конце жизни. */
-const AGE_ART = {
-  M: {
-    6: LOCAL,
-    12: LOCAL,
-    20: LOCAL,
-    35: LOCAL,
-    52: LOCAL,
-    75: LOCAL,
-  },
-  F: {
-    6: LOCAL,
-    12: LOCAL,
-    20: LOCAL,
-    35: LOCAL,
-    52: LOCAL,
-    75: LOCAL,
-  },
+/** Портреты по возрастам. Шесть из 1.0 (6, 12, 20, 35, 52, 75): по ним рисовались сцены, они на карточке типа.
+ *  В 1.1 к ним дорисованы все возрасты эпизодов, от 10 до 84: лицо в табло взрослеет каждый ход. */
+const FACES = {
+  M: [6, 10, 12, 14, 17, 20, 23, 28, 35, 39, 46, 51, 52, 55, 59, 65, 71, 75, 78, 84],
+  F: [6, 10, 12, 14, 17, 20, 23, 28, 35, 52, 75],
 };
+const AGE_ART = { M: Object.fromEntries(FACES.M.map((a) => [a, LOCAL])), F: Object.fromEntries(FACES.F.map((a) => [a, LOCAL])) };
 const PORTRAIT_AGES = [6, 12, 20, 35, 52, 75];
+/** Есть ли портрет ровно этого возраста. */
+const hasFace = (sex, age) => Boolean(AGE_ART[sex] && AGE_ART[sex][age]);
 const artPic = (name, id) => ({ local: `img/${ART_PREFIX}${name}.jpg`, remote: id && id !== LOCAL ? `${IMG_BASE}${id}.png` : null });
 /** { local, remote } для сцены или null, если ключа нет. */
 function imageFor(key) {
@@ -4509,8 +4516,8 @@ function imageFor(key) {
   pic.set = `img/${ART_PREFIX}${key}.webp 1024w, img/hd/${ART_PREFIX}${key}.webp 1524w`;
   return pic;
 }
-/** Портрет героя в данном возрасте (6, 12, 20, 35, 52, 75). */
-const ageFor = (sex, age) => artPic(`age-${sex}-${age}`, AGE_ART[sex][age]);
+/** Портрет героя в данном возрасте; WebP 160 px для табло, 410 px для ленты лиц, 819 px для крупных, JPEG запасной. */
+const ageFor = (sex, age) => ({ ...artPic(`age-${sex}-${age}`, AGE_ART[sex][age]), set: `img/xs/${ART_PREFIX}age-${sex}-${age}.webp 160w, img/sm/${ART_PREFIX}age-${sex}-${age}.webp 410w, img/${ART_PREFIX}age-${sex}-${age}.webp 819w` });
 const portraitFor = (sex) => ageFor(sex, 6);
 /** Картина главы жизни (1–4: весна, лето, осень, зима) и обложка стартового экрана. Их дорисовывают:
  *  пока файла нет, глава открывается одним заголовком, а старт — как раньше, без обложки. */
@@ -5330,6 +5337,9 @@ const SIZES = {
   memory: '(min-width: 800px) 704px, calc(100vw - 24px)',
   cover: '(min-width: 1024px) 992px, calc(100vw - 32px)',
   chapter: '(min-width: 1216px) 1184px, calc(100vw - 32px)',
+  face: '(min-width: 48rem) 52px, 44px',
+  hero: '(min-width: 48rem) 340px, calc(50vw - 24px)',
+  strip: '(min-width: 40rem) 104px, 25vw',
 };
 function picture(src, alt, cls, eager = false, sizes = SIZES.scene) {
   if (!src) return null;
@@ -5452,7 +5462,12 @@ const seenCount = (sex) => [...seenSet()].filter((k) => k.startsWith(sex)).lengt
 const scenesWord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'сцена' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'сцены' : 'сцен');
 
 /** Портрет героя для возраста: шесть нарисованных возрастов, ближайший не младше. */
-const faceAge = (age) => (age <= 6 ? 6 : age <= 14 ? 12 : age <= 23 ? 20 : age <= 39 ? 35 : age <= 59 ? 52 : 75);
+/** Шесть старых ступеней лица: от них зависит, показывать ли «лицо повзрослеет» в итоге поступка. */
+const faceGroup = (age) => (age <= 6 ? 6 : age <= 14 ? 12 : age <= 23 ? 20 : age <= 39 ? 35 : age <= 59 ? 52 : 75);
+/** Лицо для возраста: портрет ровно этого возраста, а если его нет, ближайшая старая ступень. */
+const faceAge = (age, sex = state && state.sex) => (sex && hasFace(sex, age) ? age : faceGroup(age));
+/** Возрасты жизни, для которых есть портреты: все 16, когда дорисованы, иначе шесть старых. */
+const lifeFaces = (sex) => (AGES.every((a) => hasFace(sex, a)) ? AGES : PORTRAIT_AGES);
 
 /** Табло сверху: лицо героя в этом возрасте, кольцо прожитой жизни, масти прожитых сцен, полоса из 16 возрастов. */
 let hudWas = null;
@@ -5473,7 +5488,7 @@ function renderHud() {
   if (was.age < age && !calm()) countUp(ageBig, was.age, age);
   hud.replaceChildren(el('div', { class: 'wrap' },
     el('div', { class: 'hud-in' },
-      el('div', { class: 'avatar', style: `--p:${p};--p0:${Math.min(was.p, p)}` }, picture(ageFor(state.sex, faceAge(age)), '', 'face', true)),
+      el('div', { class: 'avatar', style: `--p:${p};--p0:${Math.min(was.p, p)}` }, picture(ageFor(state.sex, faceAge(age)), '', 'face', true, SIZES.face)),
       el('div', { class: 'hud-age' },
         ageBig,
         el('span', { class: 'hud-step' }, over ? 'жизнь прожита' : `решение ${ep} из ${TOTAL_EPISODES}`)),
@@ -5505,6 +5520,10 @@ function render() {
   renderHud();
   root.replaceChildren();
   document.body.classList.toggle('at-start', !state);
+  // свет над столом по времени года: глава сцены, а в конце — время года, когда герой умер (у него осень, у неё весна)
+  const pend = state && pendingResult(state);
+  const season = !state ? '' : isOver(state) && !pend ? (state.sex === 'F' ? '1' : '3') : String(Math.min(4, Math.ceil((pend ? pend.episode : state.episode) / 4)));
+  if (document.body.dataset.season !== season) document.body.dataset.season = season;
   if (!state) return renderStart();
   if (pendingResult(state)) return renderResult();
   if (isOver(state)) return renderEnding();
@@ -5564,7 +5583,7 @@ function renderStart() {
     const n = seenCount(sex);
     const total = sceneMap(sex).reduce((k, r) => k + r.scenes.filter(Boolean).length, 0);
     const card = el('button', { class: 'hero-card deal', id: `start-${sex.toLowerCase()}`, style: `--i:${sex === 'M' ? 1 : 2}`, onclick: (e) => start(sex, e.currentTarget) },
-      picture(portraitFor(sex), label, 'portrait', true),
+      picture(portraitFor(sex), label, 'portrait', true, SIZES.hero),
       el('span', { class: 'hero-name' }, label),
       el('span', { class: 'hero-sub' }, sub),
       el('span', { class: 'meter', 'aria-hidden': 'true' }, el('i', { style: `width:${Math.round((Math.min(n, total) / total) * 100)}%` })),
@@ -5601,7 +5620,10 @@ function ageCycle(card, sex) {
   const fig = card.querySelector('.portrait');
   try { if (!fig || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return; } catch { return; }
   const label = (a) => `${a} ${yearsWord(a)}`;
-  const badge = el('span', { class: 'age-badge', 'aria-hidden': 'true' }, label(PORTRAIT_AGES[0]));
+  const ages = lifeFaces(sex); // 1.1: все шестнадцать возрастов, лицо стареет плавнее
+  const step = ages.length > 6 ? 800 : 1100;
+  if (ages.length > 6) card.classList.add('many'); // шестнадцать лиц: смена быстрее, каждое лицо видно чисто
+  const badge = el('span', { class: 'age-badge', 'aria-hidden': 'true' }, label(ages[0]));
   fig.append(badge);
   let layers = null, k = 0, timer = null;
   const setAge = (to) => {
@@ -5616,14 +5638,19 @@ function ageCycle(card, sex) {
     k = to;
     // подпись меняется, когда новое лицо уже наполовину проявилось
     clearTimeout(badge.t);
-    badge.t = setTimeout(() => { badge.textContent = label(PORTRAIT_AGES[k]); }, 350);
+    badge.t = setTimeout(() => { badge.textContent = label(ages[k]); }, Math.round(step * .32));
   };
   card.addEventListener('mouseenter', () => {
     if (calm()) return;
-    if (!layers) layers = PORTRAIT_AGES.slice(1).map((a) => fig.insertBefore(el('img', { class: 'age-layer', src: ageFor(sex, a).local, alt: '', decoding: 'async' }), badge));
+    if (!layers) layers = ages.slice(1).map((a) => {
+      const src = ageFor(sex, a);
+      const im = el('img', { class: 'age-layer', srcset: src.set, sizes: SIZES.hero, src: src.local, alt: '', decoding: 'async' });
+      im.addEventListener('error', () => { if (im.hasAttribute('srcset')) { im.removeAttribute('srcset'); im.removeAttribute('sizes'); } }, { once: true });
+      return fig.insertBefore(im, badge);
+    });
     card.classList.add('aging');
     clearInterval(timer);
-    timer = setInterval(() => { if (!card.isConnected) { clearInterval(timer); return; } setAge((k + 1) % PORTRAIT_AGES.length); }, 1100);
+    timer = setInterval(() => { if (!card.isConnected) { clearInterval(timer); return; } setAge((k + 1) % ages.length); }, step);
   });
   card.addEventListener('mouseleave', () => {
     clearInterval(timer);
@@ -5662,13 +5689,15 @@ function restartControl() {
     el('button', { class: 'link', id: 'restart-no', onclick: () => { confirmRestart = false; render(); } }, 'Нет'));
 }
 
-/** Лента портретов героя от шести до старости: одно лицо, которое взрослеет. */
+/** Лента портретов героя от шести до старости: одно лицо, которое взрослеет. В 1.1 — все шестнадцать возрастов жизни. */
 function agesStrip(sex) {
-  return el('section', { class: 'ages', 'aria-label': 'Одно лицо, шесть возрастов' },
-    el('h3', { class: 'table-title' }, 'Одно лицо, шесть возрастов'),
-    el('div', { class: 'ages-row' }, PORTRAIT_AGES.map((a, i) => el('figure', { class: 'age-card deal', style: `--i:${i}` },
-      picture(ageFor(sex, a), `${a} ${yearsWord(a)}`, 'portrait'),
-      el('figcaption', { class: 'age-num' }, `${a} ${yearsWord(a)}`)))));
+  const ages = lifeFaces(sex);
+  const title = ages.length === AGES.length ? 'Одно лицо, шестнадцать возрастов' : 'Одно лицо, шесть возрастов';
+  return el('section', { class: 'ages', 'aria-label': title },
+    el('h3', { class: 'table-title' }, title),
+    el('div', { class: ages.length > 6 ? 'ages-row all' : 'ages-row' }, ages.map((a, i) => el('figure', { class: 'age-card deal', style: `--i:${Math.min(i, 8)}` },
+      picture(ageFor(sex, a), `${a} ${yearsWord(a)}`, 'portrait', false, SIZES.strip),
+      el('figcaption', { class: 'age-num' }, ages.length > 6 ? String(a) : `${a} ${yearsWord(a)}`)))));
 }
 
 function peopleStrip(people) {
@@ -5764,8 +5793,8 @@ function renderResult() {
   const nextChapter = fork ? chapterAt(j.episode + 1) : null; // следующая сцена открывает главу: её картина грузится заранее
   if (nextChapter) prefetch(chapterArt(state.sex, nextChapter.n));
   const nowAge = ageOf(j.episode);
-  const growFace = (a) => el('figure', { class: 'grow-face' }, picture(ageFor(state.sex, faceAge(a)), '', 'face', true), el('figcaption', {}, `${a} ${yearsWord(a)}`));
-  const grow = fork && faceAge(fork.age) !== faceAge(nowAge)
+  const growFace = (a) => el('figure', { class: 'grow-face' }, picture(ageFor(state.sex, faceAge(a)), '', 'face', true, SIZES.face), el('figcaption', {}, `${a} ${yearsWord(a)}`));
+  const grow = fork && faceGroup(fork.age) !== faceGroup(nowAge)
     ? el('div', { class: 'grow deal', style: '--i:2', role: 'img', 'aria-label': `Лицо повзрослеет: было ${ageText(nowAge)}, станет ${fork.ageText}` },
       growFace(nowAge), el('span', { class: 'grow-arrow', 'aria-hidden': 'true' }, '→'), growFace(fork.age))
     : null;

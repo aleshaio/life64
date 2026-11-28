@@ -136,26 +136,16 @@ export const SCENE_ART = {
   'F16-2': LOCAL,
   'F16-3': LOCAL,
 };
-/** Портреты по возрастам: по ним рисовались сцены. Первый (6 лет) — на стартовом экране, вся лента — в конце жизни. */
-export const AGE_ART = {
-  M: {
-    6: LOCAL,
-    12: LOCAL,
-    20: LOCAL,
-    35: LOCAL,
-    52: LOCAL,
-    75: LOCAL,
-  },
-  F: {
-    6: LOCAL,
-    12: LOCAL,
-    20: LOCAL,
-    35: LOCAL,
-    52: LOCAL,
-    75: LOCAL,
-  },
+/** Портреты по возрастам. Шесть из 1.0 (6, 12, 20, 35, 52, 75): по ним рисовались сцены, они на карточке типа.
+ *  В 1.1 к ним дорисованы все возрасты эпизодов, от 10 до 84: лицо в табло взрослеет каждый ход. */
+const FACES = {
+  M: [6, 10, 12, 14, 17, 20, 23, 28, 35, 39, 46, 51, 52, 55, 59, 65, 71, 75, 78, 84],
+  F: [6, 10, 12, 14, 17, 20, 23, 28, 35, 52, 75],
 };
+export const AGE_ART = { M: Object.fromEntries(FACES.M.map((a) => [a, LOCAL])), F: Object.fromEntries(FACES.F.map((a) => [a, LOCAL])) };
 export const PORTRAIT_AGES = [6, 12, 20, 35, 52, 75];
+/** Есть ли портрет ровно этого возраста. */
+export const hasFace = (sex, age) => Boolean(AGE_ART[sex] && AGE_ART[sex][age]);
 const artPic = (name, id) => ({ local: `img/${ART_PREFIX}${name}.jpg`, remote: id && id !== LOCAL ? `${IMG_BASE}${id}.png` : null });
 /** { local, remote } для сцены или null, если ключа нет. */
 export function imageFor(key) {
@@ -165,8 +155,8 @@ export function imageFor(key) {
   pic.set = `img/${ART_PREFIX}${key}.webp 1024w, img/hd/${ART_PREFIX}${key}.webp 1524w`;
   return pic;
 }
-/** Портрет героя в данном возрасте (6, 12, 20, 35, 52, 75). */
-export const ageFor = (sex, age) => artPic(`age-${sex}-${age}`, AGE_ART[sex][age]);
+/** Портрет героя в данном возрасте; WebP 160 px для табло, 410 px для ленты лиц, 819 px для крупных, JPEG запасной. */
+export const ageFor = (sex, age) => ({ ...artPic(`age-${sex}-${age}`, AGE_ART[sex][age]), set: `img/xs/${ART_PREFIX}age-${sex}-${age}.webp 160w, img/sm/${ART_PREFIX}age-${sex}-${age}.webp 410w, img/${ART_PREFIX}age-${sex}-${age}.webp 819w` });
 export const portraitFor = (sex) => ageFor(sex, 6);
 /** Картина главы жизни (1–4: весна, лето, осень, зима) и обложка стартового экрана. Их дорисовывают:
  *  пока файла нет, глава открывается одним заголовком, а старт — как раньше, без обложки. */

@@ -3,7 +3,7 @@
 import { newGame, buildScene, applyChoice, acknowledge, isOver, pendingResult, buildEpilogue, ageText, ageOf, forkOf, sceneMap, yearsWord, TOTAL_EPISODES, START_OPTIONS } from '../core/engine.js';
 import { storage } from '../core/save.js';
 import { AGES, CHAPTERS } from '../data/life.js';
-import { imageFor, portraitFor, ageFor, PORTRAIT_AGES, chapterArt, COVER_ART, endArt } from '../data/images.js';
+import { imageFor, portraitFor, ageFor, hasFace, PORTRAIT_AGES, chapterArt, COVER_ART, endArt } from '../data/images.js';
 import { QUAD_ORDER, ROLE_ORDER, QUAD_RU, ROLE_RU } from '../data/types.js';
 import { PATTERN_BY_N } from '../data/patterns.js';
 import { coords, bitString, glyph, line, hexNumber } from '../core/hexagram.js';
@@ -177,6 +177,9 @@ const SIZES = {
   memory: '(min-width: 800px) 704px, calc(100vw - 24px)',
   cover: '(min-width: 1024px) 992px, calc(100vw - 32px)',
   chapter: '(min-width: 1216px) 1184px, calc(100vw - 32px)',
+  face: '(min-width: 48rem) 52px, 44px',
+  hero: '(min-width: 48rem) 340px, calc(50vw - 24px)',
+  strip: '(min-width: 40rem) 104px, 25vw',
 };
 function picture(src, alt, cls, eager = false, sizes = SIZES.scene) {
   if (!src) return null;
@@ -299,7 +302,12 @@ const seenCount = (sex) => [...seenSet()].filter((k) => k.startsWith(sex)).lengt
 const scenesWord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'сцена' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'сцены' : 'сцен');
 
 /** Портрет героя для возраста: шесть нарисованных возрастов, ближайший не младше. */
-const faceAge = (age) => (age <= 6 ? 6 : age <= 14 ? 12 : age <= 23 ? 20 : age <= 39 ? 35 : age <= 59 ? 52 : 75);
+/** Шесть старых ступеней лица: от них зависит, показывать ли «лицо повзрослеет» в итоге поступка. */
+const faceGroup = (age) => (age <= 6 ? 6 : age <= 14 ? 12 : age <= 23 ? 20 : age <= 39 ? 35 : age <= 59 ? 52 : 75);
+/** Лицо для возраста: портрет ровно этого возраста, а если его нет, ближайшая старая ступень. */
+const faceAge = (age, sex = state && state.sex) => (sex && hasFace(sex, age) ? age : faceGroup(age));
+/** Возрасты жизни, для которых есть портреты: все 16, когда дорисованы, иначе шесть старых. */
+const lifeFaces = (sex) => (AGES.every((a) => hasFace(sex, a)) ? AGES : PORTRAIT_AGES);
 
 /** Табло сверху: лицо героя в этом возрасте, кольцо прожитой жизни, масти прожитых сцен, полоса из 16 возрастов. */
 let hudWas = null;
@@ -320,7 +328,7 @@ function renderHud() {
   if (was.age < age && !calm()) countUp(ageBig, was.age, age);
   hud.replaceChildren(el('div', { class: 'wrap' },
     el('div', { class: 'hud-in' },
-      el('div', { class: 'avatar', style: `--p:${p};--p0:${Math.min(was.p, p)}` }, picture(ageFor(state.sex, faceAge(age)), '', 'face', true)),
+      el('div', { class: 'avatar', style: `--p:${p};--p0:${Math.min(was.p, p)}` }, picture(ageFor(state.sex, faceAge(age)), '', 'face', true, SIZES.face)),
       el('div', { class: 'hud-age' },
         ageBig,
         el('span', { class: 'hud-step' }, over ? 'жизнь прожита' : `решение ${ep} из ${TOTAL_EPISODES}`)),
@@ -352,6 +360,10 @@ function render() {
   renderHud();
   root.replaceChildren();
   document.body.classList.toggle('at-start', !state);
+  // свет над столом по времени года: глава сцены, а в конце — время года, когда герой умер (у него осень, у неё весна)
+  const pend = state && pendingResult(state);
+  const season = !state ? '' : isOver(state) && !pend ? (state.sex === 'F' ? '1' : '3') : String(Math.min(4, Math.ceil((pend ? pend.episode : state.episode) / 4)));
+  if (document.body.dataset.season !== season) document.body.dataset.season = season;
   if (!state) return renderStart();
   if (pendingResult(state)) return renderResult();
   if (isOver(state)) return renderEnding();
@@ -411,7 +423,7 @@ function renderStart() {
     const n = seenCount(sex);
     const total = sceneMap(sex).reduce((k, r) => k + r.scenes.filter(Boolean).length, 0);
     const card = el('button', { class: 'hero-card deal', id: `start-${sex.toLowerCase()}`, style: `--i:${sex === 'M' ? 1 : 2}`, onclick: (e) => start(sex, e.currentTarget) },
-      picture(portraitFor(sex), label, 'portrait', true),
+      picture(portraitFor(sex), label, 'portrait', true, SIZES.hero),
       el('span', { class: 'hero-name' }, label),
       el('span', { class: 'hero-sub' }, sub),
       el('span', { class: 'meter', 'aria-hidden': 'true' }, el('i', { style: `width:${Math.round((Math.min(n, total) / total) * 100)}%` })),
@@ -448,7 +460,10 @@ function ageCycle(card, sex) {
   const fig = card.querySelector('.portrait');
   try { if (!fig || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return; } catch { return; }
   const label = (a) => `${a} ${yearsWord(a)}`;
-  const badge = el('span', { class: 'age-badge', 'aria-hidden': 'true' }, label(PORTRAIT_AGES[0]));
+  const ages = lifeFaces(sex); // 1.1: все шестнадцать возрастов, лицо стареет плавнее
+  const step = ages.length > 6 ? 800 : 1100;
+  if (ages.length > 6) card.classList.add('many'); // шестнадцать лиц: смена быстрее, каждое лицо видно чисто
+  const badge = el('span', { class: 'age-badge', 'aria-hidden': 'true' }, label(ages[0]));
   fig.append(badge);
   let layers = null, k = 0, timer = null;
   const setAge = (to) => {
@@ -463,14 +478,19 @@ function ageCycle(card, sex) {
     k = to;
     // подпись меняется, когда новое лицо уже наполовину проявилось
     clearTimeout(badge.t);
-    badge.t = setTimeout(() => { badge.textContent = label(PORTRAIT_AGES[k]); }, 350);
+    badge.t = setTimeout(() => { badge.textContent = label(ages[k]); }, Math.round(step * .32));
   };
   card.addEventListener('mouseenter', () => {
     if (calm()) return;
-    if (!layers) layers = PORTRAIT_AGES.slice(1).map((a) => fig.insertBefore(el('img', { class: 'age-layer', src: ageFor(sex, a).local, alt: '', decoding: 'async' }), badge));
+    if (!layers) layers = ages.slice(1).map((a) => {
+      const src = ageFor(sex, a);
+      const im = el('img', { class: 'age-layer', srcset: src.set, sizes: SIZES.hero, src: src.local, alt: '', decoding: 'async' });
+      im.addEventListener('error', () => { if (im.hasAttribute('srcset')) { im.removeAttribute('srcset'); im.removeAttribute('sizes'); } }, { once: true });
+      return fig.insertBefore(im, badge);
+    });
     card.classList.add('aging');
     clearInterval(timer);
-    timer = setInterval(() => { if (!card.isConnected) { clearInterval(timer); return; } setAge((k + 1) % PORTRAIT_AGES.length); }, 1100);
+    timer = setInterval(() => { if (!card.isConnected) { clearInterval(timer); return; } setAge((k + 1) % ages.length); }, step);
   });
   card.addEventListener('mouseleave', () => {
     clearInterval(timer);
@@ -509,13 +529,15 @@ function restartControl() {
     el('button', { class: 'link', id: 'restart-no', onclick: () => { confirmRestart = false; render(); } }, 'Нет'));
 }
 
-/** Лента портретов героя от шести до старости: одно лицо, которое взрослеет. */
+/** Лента портретов героя от шести до старости: одно лицо, которое взрослеет. В 1.1 — все шестнадцать возрастов жизни. */
 function agesStrip(sex) {
-  return el('section', { class: 'ages', 'aria-label': 'Одно лицо, шесть возрастов' },
-    el('h3', { class: 'table-title' }, 'Одно лицо, шесть возрастов'),
-    el('div', { class: 'ages-row' }, PORTRAIT_AGES.map((a, i) => el('figure', { class: 'age-card deal', style: `--i:${i}` },
-      picture(ageFor(sex, a), `${a} ${yearsWord(a)}`, 'portrait'),
-      el('figcaption', { class: 'age-num' }, `${a} ${yearsWord(a)}`)))));
+  const ages = lifeFaces(sex);
+  const title = ages.length === AGES.length ? 'Одно лицо, шестнадцать возрастов' : 'Одно лицо, шесть возрастов';
+  return el('section', { class: 'ages', 'aria-label': title },
+    el('h3', { class: 'table-title' }, title),
+    el('div', { class: ages.length > 6 ? 'ages-row all' : 'ages-row' }, ages.map((a, i) => el('figure', { class: 'age-card deal', style: `--i:${Math.min(i, 8)}` },
+      picture(ageFor(sex, a), `${a} ${yearsWord(a)}`, 'portrait', false, SIZES.strip),
+      el('figcaption', { class: 'age-num' }, ages.length > 6 ? String(a) : `${a} ${yearsWord(a)}`)))));
 }
 
 function peopleStrip(people) {
@@ -611,8 +633,8 @@ function renderResult() {
   const nextChapter = fork ? chapterAt(j.episode + 1) : null; // следующая сцена открывает главу: её картина грузится заранее
   if (nextChapter) prefetch(chapterArt(state.sex, nextChapter.n));
   const nowAge = ageOf(j.episode);
-  const growFace = (a) => el('figure', { class: 'grow-face' }, picture(ageFor(state.sex, faceAge(a)), '', 'face', true), el('figcaption', {}, `${a} ${yearsWord(a)}`));
-  const grow = fork && faceAge(fork.age) !== faceAge(nowAge)
+  const growFace = (a) => el('figure', { class: 'grow-face' }, picture(ageFor(state.sex, faceAge(a)), '', 'face', true, SIZES.face), el('figcaption', {}, `${a} ${yearsWord(a)}`));
+  const grow = fork && faceGroup(fork.age) !== faceGroup(nowAge)
     ? el('div', { class: 'grow deal', style: '--i:2', role: 'img', 'aria-label': `Лицо повзрослеет: было ${ageText(nowAge)}, станет ${fork.ageText}` },
       growFace(nowAge), el('span', { class: 'grow-arrow', 'aria-hidden': 'true' }, '→'), growFace(fork.age))
     : null;
