@@ -1,15 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#1a2427"/>
-  <rect x="20.5" y="10" width="28" height="42" rx="5" fill="#e0b25e" transform="rotate(13 34.5 31)"/>
-  <g transform="rotate(-7 30 33)">
-    <rect x="16" y="12" width="28" height="42" rx="5" fill="#f7f3ec"/>
-    <g fill="#23282a">
-      <rect x="21" y="44.6" width="18" height="3" rx=".9"/>
-      <rect x="21" y="39.2" width="7.6" height="3" rx=".9"/><rect x="31.4" y="39.2" width="7.6" height="3" rx=".9"/>
-      <rect x="21" y="33.8" width="18" height="3" rx=".9" fill="#c08f3a"/>
-      <rect x="21" y="28.4" width="7.6" height="3" rx=".9"/><rect x="31.4" y="28.4" width="7.6" height="3" rx=".9"/>
-      <rect x="21" y="23" width="18" height="3" rx=".9"/>
-      <rect x="21" y="17.6" width="7.6" height="3" rx=".9"/><rect x="31.4" y="17.6" width="7.6" height="3" rx=".9"/>
-    </g>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>Прожить жизнь</title><defs><radialGradient id="t" cx="32" cy="2" r="62" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#253338"/><stop offset="1" stop-color="#1a2427"/></radialGradient></defs><rect width="64" height="64" rx="14" fill="url(#t)"/><path fill="#e0b25e" d="M25 8H39A25 25 0 0 1 49.35 14H14.65A25 25 0 0 1 25 8ZM12.79 16H27Q28 16 28 17V21Q28 22 27 22H9.09A25 25 0 0 1 12.79 16ZM37 16H51.21A25 25 0 0 1 54.91 22H37Q36 22 36 21V17Q36 16 37 16ZM8.31 24H55.69A25 25 0 0 1 56.92 30H7.08A25 25 0 0 1 8.31 24Z"/><path fill="#ede7dc" d="M7.08 34H27Q28 34 28 35V39Q28 40 27 40H8.31A25 25 0 0 1 7.08 34ZM37 34H56.92A25 25 0 0 1 55.69 40H37Q36 40 36 39V35Q36 34 37 34ZM9.09 42H54.91A25 25 0 0 1 51.21 48H12.79A25 25 0 0 1 9.09 42ZM14.65 50H27Q28 50 28 51V55Q28 56 27 56H25A25 25 0 0 1 14.65 50ZM37 50H49.35A25 25 0 0 1 39 56H37Q36 56 36 55V51Q36 50 37 50Z"/></svg>

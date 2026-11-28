@@ -5633,7 +5633,7 @@ async function typeCard(t, ep) {
   if (!ctx) return null;
   const F = "Onest, 'Segoe UI', Roboto, system-ui, sans-serif";
   try { await Promise.all(['700 96px Onest', '600 28px Onest', '500 40px Onest'].map((f) => document.fonts.load(f))); } catch { /* запасной шрифт */ }
-  const faces = await Promise.all(PORTRAIT_AGES.map((a) => loadImage(ageFor(state.sex, a).local)));
+  const [faces, mark] = await Promise.all([Promise.all(PORTRAIT_AGES.map((a) => loadImage(ageFor(state.sex, a).local))), loadImage('mark-paper.png')]);
   // стол
   ctx.fillStyle = '#1a2427';
   ctx.fillRect(0, 0, W, H);
@@ -5726,9 +5726,14 @@ async function typeCard(t, ep) {
     ctx.fillStyle = l === hl ? '#a98238' : '#23282a';
     for (const [x0, w0] of line(state.bits, l) ? [[0, 20]] : [[0, 7.8], [12.2, 7.8]]) { roundRect(ctx, hx + x0 * hs, ry, w0 * hs, 2.2 * hs, 2); ctx.fill(); }
   }
+  ctx.font = `600 30px ${F}`;
+  const siteW = ctx.measureText(SITE).width;
   ctx.font = `700 36px ${F}`;
-  const brandW = ctx.measureText('Прожить жизнь').width;
-  const tx = hx + 52 + 26, room2 = R - brandW - 36 - tx;
+  const brandW = Math.max(ctx.measureText('Прожить жизнь').width, siteW);
+  // знак игры (солнце гексаграммы 64) слева от названия и адреса
+  const MS = 76, markX = R - brandW - 22 - MS;
+  const tx = hx + 52 + 26, room2 = (mark ? markX - 28 : R - brandW - 36) - tx;
+  if (mark) ctx.drawImage(mark, markX, hy - 8, MS, MS);
   ctx.fillStyle = '#5f6769';
   ctx.font = `500 26px ${F}`;
   ctx.fillText('Итог по И-Цзин', tx, hy + 22);
