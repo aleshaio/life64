@@ -3,7 +3,7 @@
 import { newGame, buildScene, applyChoice, acknowledge, isOver, pendingResult, buildEpilogue, ageText, ageOf, forkOf, sceneMap, yearsWord, TOTAL_EPISODES, START_OPTIONS } from '../core/engine.js';
 import { storage } from '../core/save.js';
 import { AGES, CHAPTERS } from '../data/life.js';
-import { imageFor, portraitFor, ageFor, PORTRAIT_AGES, chapterArt, COVER_ART } from '../data/images.js';
+import { imageFor, portraitFor, ageFor, PORTRAIT_AGES, chapterArt, COVER_ART, endArt } from '../data/images.js';
 import { QUAD_ORDER, ROLE_ORDER, QUAD_RU, ROLE_RU } from '../data/types.js';
 import { PATTERN_BY_N } from '../data/patterns.js';
 import { coords, bitString, glyph, line, hexNumber } from '../core/hexagram.js';
@@ -175,6 +175,8 @@ const SIZES = {
   finale: '(min-width: 1100px) 832px, calc(100vw - 32px)',
   album: '200px',
   memory: '(min-width: 800px) 704px, calc(100vw - 24px)',
+  cover: '(min-width: 1024px) 992px, calc(100vw - 32px)',
+  chapter: '(min-width: 1216px) 1184px, calc(100vw - 32px)',
 };
 function picture(src, alt, cls, eager = false, sizes = SIZES.scene) {
   if (!src) return null;
@@ -216,21 +218,28 @@ function preloadScene(key) {
 // чтобы экран сразу рисовался в нужном виде, без прыжка вёрстки, когда картина не нашлась.
 const paintings = new Map(); // адрес → 'wait' | 'ok' | 'gone'
 /** Загрузить картину заранее: к нужному экрану она уже в кэше или уже ясно, что её нет. */
-function prefetch(src) {
+function prefetch(src, sizes = SIZES.chapter) {
   if (!src || paintings.has(src.local)) return;
   paintings.set(src.local, 'wait');
   const im = new Image();
+  im.decoding = 'async';
   im.onload = () => paintings.set(src.local, 'ok');
-  im.onerror = () => paintings.set(src.local, 'gone');
+  im.onerror = () => {
+    // браузер без WebP: ещё раз, уже JPEG
+    if (im.hasAttribute('srcset')) { im.removeAttribute('srcset'); im.removeAttribute('sizes'); return; }
+    paintings.set(src.local, 'gone');
+  };
+  if (src.set) { im.sizes = sizes; im.srcset = src.set; }
   im.src = src.local;
 }
 /** Картина, которой может не быть: тогда у фигуры класс gone, а вместо картины остаётся текст. */
-function painting(src, alt, cls) {
+function painting(src, alt, cls, sizes = SIZES.chapter) {
   if (paintings.get(src.local) === 'gone') return el('figure', { class: `${cls} gone` });
-  const fig = picture(src, alt, cls, true);
+  const fig = picture(src, alt, cls, true, sizes);
   const img = fig.querySelector('img');
   img.addEventListener('load', () => paintings.set(src.local, 'ok'));
-  img.addEventListener('error', () => paintings.set(src.local, 'gone'));
+  // нет WebP — picture() сам откатится к JPEG; картины нет, только когда не нашёлся и он
+  img.addEventListener('error', () => { if (fig.classList.contains('gone')) paintings.set(src.local, 'gone'); });
   return fig;
 }
 
@@ -351,14 +360,14 @@ function render() {
 
 /** Что нового — только тем, кто уже играл: пока не закроют заметку или не начнут новую жизнь. */
 const NEWS_KEY = 'prozhit-zhizn:news';
-const NEWS_VERSION = '1.0';
+const NEWS_VERSION = '1.1';
 const newsSeen = () => { try { return !LS || LS.getItem(NEWS_KEY) === NEWS_VERSION; } catch { return true; } };
 const newsDone = () => { try { if (LS) LS.setItem(NEWS_KEY, NEWS_VERSION); } catch { /* ignore */ } };
 function newsNote(saved) {
   if (newsSeen() || (!saved && !seenSet().size)) return null;
   const note = el('aside', { class: 'news deal', style: '--i:1', 'aria-label': 'Что нового' },
-    el('p', { class: 'news-k' }, 'Новое в версии 1.0'),
-    el('p', { class: 'news-t' }, 'Все картинки нарисованы заново. Карты переворачиваются, лицо взрослеет плавно, а в конце вся жизнь проходит перед глазами. Ещё появились альбом жизни и карточка типа, которой можно поделиться.'),
+    el('p', { class: 'news-k' }, 'Новое в версии 1.1'),
+    el('p', { class: 'news-t' }, 'У игры появился знак: солнце гексаграммы 64. Жизнь теперь идёт четырьмя главами, от весны детства до зимы старости, у каждой своя картина, а в конце эпилог. Картинки стали чётче на больших экранах, бумага карт стала фактурной, а итог жизни собирается гексаграммой И-Цзин.'),
     el('button', { class: 'news-x', type: 'button', 'aria-label': 'Скрыть', onclick: () => {
       newsDone();
       const next = root.querySelector('#continue, .hero-card'); // фокус не теряется: переходит к следующей кнопке
@@ -366,6 +375,32 @@ function newsNote(saved) {
       if (next) next.focus();
     } }, '×'));
   return note;
+}
+
+/** Знак «Прожить жизнь»: солнце гексаграммы 64 «Перед переправой» (Огонь над Водой). Черты проявляются снизу вверх. */
+const MARK_LINES = [
+  'M14.65 50H27Q28 50 28 51V55Q28 56 27 56H25A25 25 0 0 1 14.65 50ZM37 50H49.35A25 25 0 0 1 39 56H37Q36 56 36 55V51Q36 50 37 50Z',
+  'M9.09 42H54.91A25 25 0 0 1 51.21 48H12.79A25 25 0 0 1 9.09 42Z',
+  'M7.08 34H27Q28 34 28 35V39Q28 40 27 40H8.31A25 25 0 0 1 7.08 34ZM37 34H56.92A25 25 0 0 1 55.69 40H37Q36 40 36 39V35Q36 34 37 34Z',
+  'M8.31 24H55.69A25 25 0 0 1 56.92 30H7.08A25 25 0 0 1 8.31 24Z',
+  'M12.79 16H27Q28 16 28 17V21Q28 22 27 22H9.09A25 25 0 0 1 12.79 16ZM37 16H51.21A25 25 0 0 1 54.91 22H37Q36 22 36 21V17Q36 16 37 16Z',
+  'M25 8H39A25 25 0 0 1 49.35 14H14.65A25 25 0 0 1 25 8Z',
+];
+function startMark() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'start-mark');
+  svg.setAttribute('viewBox', '6 6 52 52');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  MARK_LINES.forEach((d, i) => {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('class', i >= 3 ? 'ln fire' : 'ln');
+    p.setAttribute('style', `--i:${i}`);
+    p.setAttribute('d', d);
+    svg.append(p);
+  });
+  return svg;
 }
 
 function renderStart() {
@@ -390,9 +425,9 @@ function renderStart() {
   if (ch) prefetch(chapterArt(saved.sex, ch.n));
   setTimeout(() => { if (!state) ['M', 'F'].forEach((sex) => prefetch(chapterArt(sex, 1))); }, 1500);
   root.append(el('section', { class: 'start' },
-    painting(COVER_ART, 'Город на большой реке в золотой час', 'cover'),
-    // место под знак игры: пока в нём веер из четырёх карт
-    el('span', { class: 'logo-slot' }, el('span', { class: 'deck', 'aria-hidden': 'true' }, SUITS.map((s, i) => el('span', { class: `dc sp${i}` }, icon(i))))),
+    painting(COVER_ART, 'Город на большой реке в золотой час', 'cover', SIZES.cover),
+    // знак игры: солнце гексаграммы 64, медаль на нижнем крае обложки
+    el('span', { class: 'logo-slot' }, startMark()),
     el('p', { class: 'eyebrow' }, '16 решений · от 6 до 84 лет'),
     el('h1', { class: 'title' }, 'Прожить жизнь'),
     el('p', { class: 'lede' }, 'Город на большой реке, шестнадцать возрастов. В каждом тебе сдают сцену и четыре карты поступков, и каждая ведёт в свою сторону жизни. Люди запомнят твои поступки, а в конце станет ясно, каким человеком была прожита эта жизнь.'),
@@ -1038,6 +1073,17 @@ function lifeReel(lastJ) {
   return fig;
 }
 
+/** Последняя картина жизни перед «Прожить другую жизнь»: каким героя запомнили. Без картины блока нет. */
+const EPI_SEASON = { M: 'Поздняя осень, город над рекой.', F: 'Ранняя весна, на реке трогается лёд.' };
+function epilogue() {
+  const fig = painting(endArt(state.sex), g('{Старик|Старушка} у реки в золотой час'), 'chapter-art epi-art');
+  if (fig.classList.contains('gone')) return null;
+  fig.append(el('figcaption', { class: 'chapter-cap' },
+    el('span', { class: 'chapter-kicker' }, el('span', { class: 'chapter-k' }, 'Эпилог'), el('span', { class: 'chapter-ages' }, `84\u00A0${yearsWord(84)}`)),
+    el('h2', { class: 'chapter-name' }, g('{Таким|Такой} тебя запомнили'))));
+  return el('section', { class: 'chapter epilogue', 'aria-label': 'Эпилог' }, fig, el('p', { class: 'chapter-epi' }, EPI_SEASON[state.sex]));
+}
+
 function renderEnding() {
   const ep = buildEpilogue(state);
   const t = ep.type;
@@ -1109,6 +1155,7 @@ function renderEnding() {
       ep.repeated.length ? el('p', {}, 'Повторились: ' + ep.repeated.map((r) => `«${r.motif}» в ${r.ages.join(' и ')} лет`).join('; ') + '.') : el('p', {}, 'Ни одно состояние не повторилось.'),
       el('p', {}, `Сколько раз менялась каждая черта, снизу вверх: ${ep.lineFlips.join(' · ')}.`),
       el('div', { class: 'final-hex' }, hexGlyph(state.bits, lastJ.line, `Финальная гексаграмма ${hexName(ep.final.hex)}`))),
+    epilogue(),
     el('div', { class: 'actions' }, el('button', { class: 'btn-go', id: 'again', onclick: again }, 'Прожить другую жизнь')),
   ));
   revealSeal(root.querySelector('#type'));
