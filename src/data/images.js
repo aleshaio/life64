@@ -140,7 +140,7 @@ export const SCENE_ART = {
  *  В 1.1 к ним дорисованы все возрасты эпизодов, от 10 до 84: лицо в табло взрослеет каждый ход. */
 const FACES = {
   M: [6, 10, 12, 14, 17, 20, 23, 28, 35, 39, 46, 51, 52, 55, 59, 65, 71, 75, 78, 84],
-  F: [6, 10, 12, 14, 17, 20, 23, 28, 35, 52, 75],
+  F: [6, 10, 12, 14, 17, 20, 23, 28, 35, 39, 46, 51, 52, 55, 59, 65, 71, 75, 78, 84],
 };
 export const AGE_ART = { M: Object.fromEntries(FACES.M.map((a) => [a, LOCAL])), F: Object.fromEntries(FACES.F.map((a) => [a, LOCAL])) };
 export const PORTRAIT_AGES = [6, 12, 20, 35, 52, 75];

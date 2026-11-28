@@ -492,6 +492,13 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .album-age .ico { width: 1em; height: 1em; color: var(--sp); }
 .album-title { font-size: .92rem; font-weight: 600; line-height: 1.28; letter-spacing: -.005em; overflow-wrap: anywhere; }
 @media (min-width: 40rem) { .album-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; } }
+/* 1.1: строка главы над её четырьмя картами */
+.album-ch { grid-column: 1 / -1; display: flex; align-items: baseline; flex-wrap: wrap; gap: .1rem .55rem; margin: .7rem 0 -.05rem; font-size: .8rem; font-weight: 600; line-height: 1.25; }
+.album-ch:first-child { margin-top: .1rem; }
+.album-ch .chapter-k { letter-spacing: .07em; }
+.album-ch-t { font-family: var(--font-display); font-size: 1rem; font-weight: 650; letter-spacing: -.01em; color: var(--table-ink); }
+.album-ch-a { color: var(--table-dim); font-variant-numeric: tabular-nums; }
+.album-ch::after { content: ""; flex: 1 1 2rem; align-self: center; height: 1px; margin-left: .2rem; background: var(--table-line); }
 
 /* воспоминание: карта альбома целиком поверх стола */
 html:has(dialog.memory[open]) { overflow: hidden; }
@@ -4501,7 +4508,7 @@ const SCENE_ART = {
  *  В 1.1 к ним дорисованы все возрасты эпизодов, от 10 до 84: лицо в табло взрослеет каждый ход. */
 const FACES = {
   M: [6, 10, 12, 14, 17, 20, 23, 28, 35, 39, 46, 51, 52, 55, 59, 65, 71, 75, 78, 84],
-  F: [6, 10, 12, 14, 17, 20, 23, 28, 35, 52, 75],
+  F: [6, 10, 12, 14, 17, 20, 23, 28, 35, 39, 46, 51, 52, 55, 59, 65, 71, 75, 78, 84],
 };
 const AGE_ART = { M: Object.fromEntries(FACES.M.map((a) => [a, LOCAL])), F: Object.fromEntries(FACES.F.map((a) => [a, LOCAL])) };
 const PORTRAIT_AGES = [6, 12, 20, 35, 52, 75];
@@ -5883,13 +5890,17 @@ function album() {
   return el('section', { class: 'album', 'aria-labelledby': 'album-title' },
     el('h3', { class: 'table-title', id: 'album-title' }, 'Шестнадцать карт этой жизни'),
     el('p', { class: 'table-note' }, g('Нажми на карту, чтобы вспомнить, что ты тогда {сделал|сделала} и что было дальше.')),
-    el('ol', { class: 'album-grid' }, state.journal.map((j, i) => {
+    el('ol', { class: 'album-grid' }, state.journal.flatMap((j, i) => {
       const age = ageOf(j.episode);
-      return el('li', {}, el('button', { class: `album-card sp${j.sphere}`, id: `memory-${i + 1}`, onclick: () => remember(i) },
+      const ch = chapterAt(j.episode); // 1.1: альбом разложен по главам жизни, у каждой своя строка
+      const head = ch ? el('li', { class: 'album-ch' },
+        el('span', { class: 'chapter-k' }, `Глава\u00A0${ch.roman}`), el('span', { class: 'album-ch-t' }, ch.title), el('span', { class: 'album-ch-a' }, ch.ages)) : null;
+      const card = el('li', {}, el('button', { class: `album-card sp${j.sphere}`, id: `memory-${i + 1}`, onclick: () => remember(i) },
         art(imageFor(j.img), '', j.sphere, { sizes: SIZES.album }),
         el('span', { class: 'album-body' },
           el('span', { class: 'album-age' }, icon(j.sphere), `${age} ${yearsWord(age)}`),
           el('span', { class: 'album-title' }, j.title))));
+      return head ? [head, card] : [card];
     })));
 }
 

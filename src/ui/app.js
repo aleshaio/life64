@@ -723,13 +723,17 @@ function album() {
   return el('section', { class: 'album', 'aria-labelledby': 'album-title' },
     el('h3', { class: 'table-title', id: 'album-title' }, 'Шестнадцать карт этой жизни'),
     el('p', { class: 'table-note' }, g('Нажми на карту, чтобы вспомнить, что ты тогда {сделал|сделала} и что было дальше.')),
-    el('ol', { class: 'album-grid' }, state.journal.map((j, i) => {
+    el('ol', { class: 'album-grid' }, state.journal.flatMap((j, i) => {
       const age = ageOf(j.episode);
-      return el('li', {}, el('button', { class: `album-card sp${j.sphere}`, id: `memory-${i + 1}`, onclick: () => remember(i) },
+      const ch = chapterAt(j.episode); // 1.1: альбом разложен по главам жизни, у каждой своя строка
+      const head = ch ? el('li', { class: 'album-ch' },
+        el('span', { class: 'chapter-k' }, `Глава\u00A0${ch.roman}`), el('span', { class: 'album-ch-t' }, ch.title), el('span', { class: 'album-ch-a' }, ch.ages)) : null;
+      const card = el('li', {}, el('button', { class: `album-card sp${j.sphere}`, id: `memory-${i + 1}`, onclick: () => remember(i) },
         art(imageFor(j.img), '', j.sphere, { sizes: SIZES.album }),
         el('span', { class: 'album-body' },
           el('span', { class: 'album-age' }, icon(j.sphere), `${age} ${yearsWord(age)}`),
           el('span', { class: 'album-title' }, j.title))));
+      return head ? [head, card] : [card];
     })));
 }
 

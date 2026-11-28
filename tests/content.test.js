@@ -152,6 +152,21 @@ test('у каждой сцены есть иллюстрация; локальн
   }
 });
 
+test('1.1: лицо героя есть в каждом возрасте жизни, и у всех картинок есть WebP из srcset', async () => {
+  const { ageFor, hasFace, imageFor, chapterArt, COVER_ART, endArt } = await import('../src/data/images.js');
+  const { AGES } = await import('../src/data/life.js');
+  const { existsSync } = await import('node:fs');
+  const files = (pic) => [pic.local, ...pic.set.split(',').map((c) => c.trim().split(/\s+/)[0])];
+  const pics = [COVER_ART];
+  for (const sex of SEXES) {
+    for (const a of AGES) { assert.ok(hasFace(sex, a), `нет портрета ${sex} ${a}`); pics.push(ageFor(sex, a)); }
+    for (let n = 1; n <= 4; n++) pics.push(chapterArt(sex, n));
+    pics.push(endArt(sex));
+    for (const { ep, sp } of sits(sex)) pics.push(imageFor(`${sex}${ep}-${sp}`));
+  }
+  for (const pic of pics) for (const f of files(pic)) assert.ok(existsSync(`dist/${f}`), `нет файла dist/${f}`);
+});
+
 test('у каждой сцены свой промпт иллюстрации на английском, без кириллицы', () => {
   for (const sex of SEXES) for (const { ep, sp, s } of sits(sex)) assert.ok(/^[\x20-\x7e]+$/.test(s.img) && s.img.length > 60, `${sex}${ep}-${sp}`);
 });
