@@ -507,6 +507,52 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .album-ch-a { color: var(--table-dim); font-variant-numeric: tabular-nums; }
 .album-ch::after { content: ""; flex: 1 1 2rem; align-self: center; height: 1px; margin-left: .2rem; background: var(--table-line); }
 
+/* 1.1: шестнадцать жизней — все картины типов столом 4 × 4 (строки — стихии, столбцы — роли). Прожитые на этом устройстве
+   в цвете, ещё не прожитые приглушены, но хорошо видны: это картины, а не запертые двери. Эта жизнь — в золотом кольце.
+   Имя под картиной мелко, не больше двух строк; кегль на телефоне идёт от ширины клетки, чтобы длинные слова входили целиком. */
+.lives-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem 5px; }
+.life { display: flex; flex-direction: column; gap: .42rem; min-width: 0; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--table-dim); font: inherit; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.life-pic { position: relative; display: block; aspect-ratio: 3 / 2; border-radius: 7px; overflow: hidden; background: linear-gradient(160deg, var(--table-hi), var(--table-deep)); box-shadow: 0 1px 0 rgba(0, 0, 0, .12), 0 6px 14px var(--shade); transition: transform .2s ease, box-shadow .2s ease; }
+.life-pic img { display: block; width: 100%; height: 100%; object-fit: cover; transition: filter .35s ease, opacity .35s ease; }
+.life:not(.lived) .life-pic img { filter: grayscale(.6) brightness(.95); opacity: .75; }
+.life[aria-pressed="true"] .life-pic img { filter: none; opacity: 1; }
+.life-name { --fs: clamp(.56rem, calc(2.78vw - 1.3px), .84rem); display: block; font-size: var(--fs); font-weight: 600; line-height: 1.22; letter-spacing: -.01em; -webkit-hyphens: none; hyphens: none; overflow-wrap: anywhere; }
+/* в двух самых длинных именах слово в 15–16 букв: на телефоне кегль чуть меньше, чтобы оно стояло целиком, без переноса;
+   только на самых узких экранах (320 px) оно переносится по слогу, а не рвётся где придётся */
+.life-name.long { font-size: calc(var(--fs) * .93); }
+@media (max-width: 22.4rem) { .life-name.long { -webkit-hyphens: manual; hyphens: manual; } }
+.life.lived .life-name, .life[aria-pressed="true"] .life-name { color: var(--table-ink); }
+.life.now .life-name { color: var(--accent); }
+.life.now .life-pic { box-shadow: 0 0 0 1.5px var(--table), 0 0 0 3px var(--accent), 0 6px 14px var(--shade); }
+.life[aria-pressed="true"]:not(.now) .life-pic { box-shadow: 0 0 0 1.5px var(--table), 0 0 0 3px var(--table-dim), 0 6px 14px var(--shade); }
+.life-now { position: absolute; left: 3px; bottom: 3px; max-width: calc(100% - 6px); padding: .08rem .34rem .12rem; border-radius: 99px; background: rgba(20, 28, 31, .72); color: var(--accent-hi); font-size: .5rem; font-weight: 650; line-height: 1.25; white-space: nowrap; overflow: hidden; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.life:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+@media (hover: hover) {
+  .life:hover .life-pic { transform: translateY(-2px); }
+  .life:not(.lived):not([aria-pressed="true"]):hover .life-pic img { opacity: .86; filter: grayscale(.4); }
+}
+.life:active .life-pic { transform: translateY(1px); transition-duration: .08s; }
+.lives-cap { margin-top: 1.05rem; padding: .8rem 1rem .9rem; border-radius: 14px; background: var(--card); background-image: var(--grain); background-size: 180px 180px; color: var(--ink); box-shadow: var(--lift); }
+.lives-cap p { margin: 0; }
+.lives-cap-k { font-size: .8rem; font-weight: 500; color: var(--ink-dim); }
+.lives-cap .lives-cap-name { margin-top: .12rem; font-size: 1.1rem; font-weight: 700; line-height: 1.25; letter-spacing: -.015em; text-wrap: balance; }
+.lives-cap .lives-cap-text { margin-top: .3rem; max-width: 36em; font-size: 1rem; line-height: 1.5; }
+.lives-cap > * { animation: cap-in .35s ease backwards; }
+.lives.armed:not(.play) .life { opacity: 0; }
+.lives.play .life { animation: life-in .6s calc(var(--d, 0) * 60ms) cubic-bezier(.2, .8, .2, 1) backwards; }
+@keyframes life-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes cap-in { from { opacity: 0; } }
+@media (min-width: 40rem) {
+  .lives-grid { gap: 1.15rem .9rem; }
+  .life { gap: .55rem; border-radius: 12px; }
+  .life-name, .life-name.long { font-size: var(--fs); text-wrap: balance; }
+  .life-pic { border-radius: 11px; }
+  .life.now .life-pic { box-shadow: 0 0 0 2px var(--table), 0 0 0 4px var(--accent), 0 8px 18px var(--shade); }
+  .life[aria-pressed="true"]:not(.now) .life-pic { box-shadow: 0 0 0 2px var(--table), 0 0 0 4px var(--table-dim), 0 8px 18px var(--shade); }
+  .life-now { left: 7px; bottom: 7px; max-width: calc(100% - 14px); padding: .14rem .55rem .2rem; font-size: .7rem; }
+  .lives-cap { margin-top: 1.3rem; padding: 1rem 1.3rem 1.1rem; }
+}
+
 /* воспоминание: карта альбома целиком поверх стола */
 html:has(dialog.memory[open]) { overflow: hidden; }
 dialog.memory { width: min(44rem, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); margin: auto; padding: 0; border: 0; border-radius: var(--r-card); background: transparent; color: var(--ink); overflow: auto; overscroll-behavior: contain; }
@@ -4555,6 +4601,8 @@ const COVER_ART = { local: 'img/cover.jpg', set: paintingSet('cover'), remote: n
  *  В списке только уже нарисованные: для остальных картины в карте типа нет. */
 const TYPE_ART = new Set(['air-EN', 'air-IN', 'air-IS', 'air-ES', 'fire-EN', 'fire-IN', 'fire-IS', 'fire-ES', 'water-EN', 'water-IN', 'water-IS', 'water-ES', 'earth-EN', 'earth-IN', 'earth-IS', 'earth-ES']);
 const typeArt = (quad, role) => (TYPE_ART.has(`${quad}-${role}`) ? { local: `img/type-${quad}-${role}.jpg`, set: paintingSet(`type-${quad}-${role}`), remote: null } : null);
+/** Те же картины маленькими для стола «Шестнадцать жизней» в финале: WebP 400 px, 1024 px для плотных экранов, JPEG запасной. */
+const typeThumb = (quad, role) => (TYPE_ART.has(`${quad}-${role}`) ? { local: `img/type-${quad}-${role}.jpg`, set: `img/sm/type-${quad}-${role}.webp 400w, img/type-${quad}-${role}.webp 1024w`, remote: null } : null);
 /** Эпилог: герой в старости, каким его запомнили (поздняя осень у него, ранняя весна у неё). */
 const endArt = (sex) => ({ local: `img/${ART_PREFIX}end-${sex}.jpg`, set: paintingSet(`${ART_PREFIX}end-${sex}`), focus: focusOf(`end-${sex}`), remote: null });
 /** Картинки для скачивания: [локальное имя без .jpg, id на сервере]. Локальные (LOCAL) скачивать неоткуда; в 1.0 это все. */
@@ -5371,6 +5419,7 @@ const SIZES = {
   hero: '(min-width: 48rem) 340px, calc(50vw - 24px)',
   strip: '(min-width: 40rem) 104px, 25vw',
   typeArt: '(min-width: 52rem) 828px, calc(100vw - 36px)',
+  lives: '(min-width: 52rem) 196px, calc(25vw - 12px)',
 };
 function picture(src, alt, cls, eager = false, sizes = SIZES.scene) {
   if (!src) return null;
@@ -5490,6 +5539,21 @@ function markSeen(key) {
   try { const s = seenSet(); if (!s.has(key)) { s.add(key); LS && LS.setItem(SEEN_KEY, JSON.stringify([...s])); } } catch { /* ignore */ }
 }
 const seenCount = (sex) => [...seenSet()].filter((k) => k.startsWith(sex)).length;
+
+// 1.1: типы жизней, прожитых на этом устройстве, — для стола «Шестнадцать жизней» в финале. Тоже только для игрока:
+// без хранилища на столе в цвете одна эта жизнь. Тип записывается один раз, повторная отрисовка того же финала ничего не меняет.
+const TYPES_KEY = 'prozhit-zhizn:types';
+const TYPE_KEYS = QUAD_ORDER.flatMap((q) => ROLE_ORDER.map((r) => `${q}-${r}`));
+function livedTypes(now) {
+  let list = [];
+  try { const v = JSON.parse((LS && LS.getItem(TYPES_KEY)) || '[]'); if (Array.isArray(v)) list = v; } catch { /* ignore */ }
+  const s = new Set(list.filter((k) => TYPE_KEYS.includes(k)));
+  if (!s.has(now)) {
+    s.add(now);
+    try { if (LS) LS.setItem(TYPES_KEY, JSON.stringify([...s])); } catch { /* ignore */ }
+  }
+  return s;
+}
 
 const scenesWord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'сцена' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'сцены' : 'сцен');
 
@@ -5927,6 +5991,64 @@ function album() {
           el('span', { class: 'album-title' }, j.title))));
       return head ? [head, card] : [card];
     })));
+}
+
+// Мягкий перенос в двух самых длинных словах имён типов: только для самых узких экранов, где слово целиком не входит в клетку стола.
+const SHY = '\u00AD';
+const BREAKS = { Первооткрыватель: 'Первооткры|ватель', закономерностей: 'законо|мерностей' };
+const softName = (name) => name.split(' ').map((w) => (BREAKS[w] ? BREAKS[w].replace('|', SHY) : w)).join(' ');
+const firstSentence = (text) => (text.match(/[^.!?]+[.!?]+(?:\s|$)/) || [text])[0].trim();
+
+/** 1.1: шестнадцать жизней — все картины типов столом 4 × 4: строки — стихии, столбцы — роли. Прожитые на этом устройстве
+ *  в цвете, ещё не прожитые приглушены, эта жизнь в золотом кольце. По нажатию под столом имя типа и первая фраза его портрета. */
+function livesTable(t) {
+  const now = `${t.quad}-${t.role}`;
+  const lived = livedTypes(now);
+  const cap = el('div', { class: 'lives-cap', 'aria-live': 'polite' });
+  const show = (q, r) => {
+    const k = `${q}-${r}`;
+    const mark = k === now ? ' · эта жизнь' : lived.has(k) ? ' · прожита раньше' : '';
+    cap.replaceChildren(
+      el('p', { class: 'lives-cap-k' }, `${QUAD_RU[q]} · ${ROLE_RU[r]}${mark}`),
+      el('p', { class: 'lives-cap-name' }, TYPES[q][r].name),
+      el('p', { class: 'lives-cap-text' }, firstSentence(g(TYPES[q][r].base))));
+  };
+  const cells = [];
+  const pick = (btn, q, r) => { for (const b of cells) b.setAttribute('aria-pressed', String(b === btn)); show(q, r); };
+  const grid = el('div', { class: 'lives-grid' }, QUAD_ORDER.flatMap((q, qi) => ROLE_ORDER.map((r, ri) => {
+    const k = `${q}-${r}`;
+    const name = TYPES[q][r].name;
+    const pic = typeThumb(q, r);
+    const img = pic ? el('img', { srcset: pic.set, sizes: SIZES.lives, src: pic.local, alt: name, width: '400', height: '267', loading: 'lazy', decoding: 'async' }) : null;
+    // браузер без WebP: назад к JPEG из src
+    if (img) img.addEventListener('error', () => { if (img.hasAttribute('srcset')) { img.removeAttribute('srcset'); img.removeAttribute('sizes'); } });
+    const cls = `life${k === now ? ' now' : ''}${lived.has(k) ? ' lived' : ''}`;
+    const btn = el('button', { type: 'button', class: cls, 'aria-pressed': String(k === now), 'aria-label': pic ? null : name, style: `--d:${qi + ri}` },
+      el('span', { class: 'life-pic' }, img, k === now ? el('span', { class: 'life-now' }, 'эта жизнь') : null),
+      el('span', { class: Math.max(...name.split(' ').map((w) => w.length)) >= 15 ? 'life-name long' : 'life-name', 'aria-hidden': 'true' }, softName(name)));
+    btn.addEventListener('click', () => pick(btn, q, r));
+    cells.push(btn);
+    return btn;
+  })));
+  show(t.quad, t.role);
+  return el('section', { class: 'lives', 'aria-labelledby': 'lives-title' },
+    el('h3', { class: 'table-title', id: 'lives-title' }, 'Шестнадцать жизней'),
+    el('p', { class: 'table-note' }, `Прожито ${lived.size} из 16`),
+    grid, cap);
+}
+/** Стол шестнадцати жизней проявляется волной, когда до него доходит прокрутка; при «меньше движения» стоит сразу. */
+function revealLives(sec) {
+  const grid = sec && sec.querySelector('.lives-grid');
+  if (!grid || calm() || typeof IntersectionObserver !== 'function') return;
+  sec.classList.add('armed');
+  const io = new IntersectionObserver((es) => {
+    if (!sec.isConnected) { io.disconnect(); return; }
+    const seen = es.some((e) => (e.isIntersecting && e.intersectionRatio > .2) || (e.rootBounds && e.boundingClientRect.bottom < e.rootBounds.top));
+    if (!seen) return;
+    io.disconnect();
+    sec.classList.add('play');
+  }, { threshold: [0, .2, 1] });
+  io.observe(grid);
 }
 
 /** Воспоминание: сыгранная карта целиком — картинка, поступок, цена и что было дальше. Листается кнопками, стрелками и свайпом. */
@@ -6380,6 +6502,7 @@ function renderEnding() {
           el('p', { class: 'type-note' }, 'Решения в 35–51 год считаются вдвое: это зрелость, главная часть жизни.')))),
     shareRow(t, ep),
     el('p', { class: 'table-text' }, ep.final.text),
+    livesTable(t),
     album(),
     ep.people.length ? el('section', { class: 'people-end' }, el('h3', { class: 'table-title' }, 'Что стало с людьми твоей жизни'),
       el('ul', { class: 'cast' }, ep.people.map((p) => el('li', { class: 'person' },
@@ -6401,6 +6524,7 @@ function renderEnding() {
     el('div', { class: 'actions' }, el('button', { class: 'btn-go', id: 'again', onclick: again }, 'Прожить другую жизнь')),
   ));
   revealSeal(root.querySelector('#type'));
+  revealLives(root.querySelector('.lives'));
   if (DEBUG) root.append(el('aside', { class: 'debug' }, el('h3', {}, 'Маршрут (JSON)'),
     el('textarea', { id: 'route-json', rows: '6', readonly: true }, JSON.stringify({ sex: state.sex, ids: state.journal.map((j) => j.choiceId) }))));
   keyHandler = null;

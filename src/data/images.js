@@ -171,6 +171,8 @@ export const COVER_ART = { local: 'img/cover.jpg', set: paintingSet('cover'), re
  *  В списке только уже нарисованные: для остальных картины в карте типа нет. */
 export const TYPE_ART = new Set(['air-EN', 'air-IN', 'air-IS', 'air-ES', 'fire-EN', 'fire-IN', 'fire-IS', 'fire-ES', 'water-EN', 'water-IN', 'water-IS', 'water-ES', 'earth-EN', 'earth-IN', 'earth-IS', 'earth-ES']);
 export const typeArt = (quad, role) => (TYPE_ART.has(`${quad}-${role}`) ? { local: `img/type-${quad}-${role}.jpg`, set: paintingSet(`type-${quad}-${role}`), remote: null } : null);
+/** Те же картины маленькими для стола «Шестнадцать жизней» в финале: WebP 400 px, 1024 px для плотных экранов, JPEG запасной. */
+export const typeThumb = (quad, role) => (TYPE_ART.has(`${quad}-${role}`) ? { local: `img/type-${quad}-${role}.jpg`, set: `img/sm/type-${quad}-${role}.webp 400w, img/type-${quad}-${role}.webp 1024w`, remote: null } : null);
 /** Эпилог: герой в старости, каким его запомнили (поздняя осень у него, ранняя весна у неё). */
 export const endArt = (sex) => ({ local: `img/${ART_PREFIX}end-${sex}.jpg`, set: paintingSet(`${ART_PREFIX}end-${sex}`), focus: focusOf(`end-${sex}`), remote: null });
 /** Картинки для скачивания: [локальное имя без .jpg, id на сервере]. Локальные (LOCAL) скачивать неоткуда; в 1.0 это все. */
