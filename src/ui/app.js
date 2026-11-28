@@ -573,14 +573,14 @@ function render() {
 
 /** Что нового — только тем, кто уже играл: пока не закроют заметку или не начнут новую жизнь. */
 const NEWS_KEY = 'prozhit-zhizn:news';
-const NEWS_VERSION = '1.1';
+const NEWS_VERSION = '1.1.5'; // заметка показывается снова, когда в 1.1 добавилось новое
 const newsSeen = () => { try { return !LS || LS.getItem(NEWS_KEY) === NEWS_VERSION; } catch { return true; } };
 const newsDone = () => { try { if (LS) LS.setItem(NEWS_KEY, NEWS_VERSION); } catch { /* ignore */ } };
 function newsNote(saved) {
   if (newsSeen() || (!saved && !seenSet().size)) return null;
   const note = el('aside', { class: 'news deal', style: '--i:1', 'aria-label': 'Что нового' },
     el('p', { class: 'news-k' }, 'Новое в версии 1.1'),
-    el('p', { class: 'news-t' }, 'Жизнь теперь идёт четырьмя главами, от весны детства до зимы старости, у каждой своя картина. Лицо героя взрослеет с каждым ходом, а в конце ждут картина твоего типа и эпилог.'),
+    el('p', { class: 'news-t' }, 'Жизнь теперь идёт четырьмя главами, от весны детства до зимы старости, и картины глав живут: лепестки, листья, снег. Лицо героя взрослеет с каждым ходом, а в конце ждут картина твоего типа, портреты людей твоей жизни и все шестнадцать жизней.'),
     el('button', { class: 'news-x', type: 'button', 'aria-label': 'Скрыть', onclick: () => {
       newsDone();
       const next = root.querySelector('#continue, .hero-card'); // фокус не теряется: переходит к следующей кнопке
