@@ -160,7 +160,10 @@ const artPic = (name, id) => ({ local: `img/${ART_PREFIX}${name}.jpg`, remote: i
 /** { local, remote } для сцены или null, если ключа нет. */
 export function imageFor(key) {
   if (!key) return null;
-  return artPic(key, SCENE_ART[key]);
+  const pic = artPic(key, SCENE_ART[key]);
+  // 1.1: WebP 1024 px и чёткая 1524 px для больших и плотных экранов; JPEG остаётся запасным src.
+  pic.set = `img/${ART_PREFIX}${key}.webp 1024w, img/hd/${ART_PREFIX}${key}.webp 1524w`;
+  return pic;
 }
 /** Портрет героя в данном возрасте (6, 12, 20, 35, 52, 75). */
 export const ageFor = (sex, age) => artPic(`age-${sex}-${age}`, AGE_ART[sex][age]);

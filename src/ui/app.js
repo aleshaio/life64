@@ -118,13 +118,23 @@ function pathStrip() {
 
 /** Иллюстрация: сначала локальная копия img/, затем оригинал; если ничего не загрузилось, остаётся заглушка.
  *  eager — грузить сразу (следующая карта, воспоминание), а не когда до картинки дойдёт прокрутка. */
-function picture(src, alt, cls, eager = false) {
+// Ширина картинки на экране для выбора из srcset: телефон, планшет, ноутбук (замерено по вёрстке).
+const SIZES = {
+  scene: '(min-width: 800px) 740px, calc(100vw - 32px)',
+  mini: '(min-width: 800px) 434px, calc(100vw - 32px)',
+  finale: '(min-width: 1100px) 832px, calc(100vw - 32px)',
+  album: '200px',
+  memory: '(min-width: 800px) 704px, calc(100vw - 24px)',
+};
+function picture(src, alt, cls, eager = false, sizes = SIZES.scene) {
   if (!src) return null;
-  const img = el('img', { src: src.local, alt, loading: eager ? 'eager' : 'lazy', decoding: 'async' });
+  const img = el('img', { srcset: src.set || null, sizes: src.set ? sizes : null, src: src.local, alt, loading: eager ? 'eager' : 'lazy', decoding: 'async' });
   const fig = el('figure', { class: cls }, img);
   if (img.complete && img.naturalWidth) fig.classList.add('ready'); // уже в кэше: без мигания
   let tried = 0;
   img.addEventListener('error', () => {
+    // браузер без WebP или нет файла: назад к JPEG из src
+    if (img.hasAttribute('srcset')) { img.removeAttribute('srcset'); img.removeAttribute('sizes'); return; }
     tried++;
     if (tried === 1 && src.remote) img.src = src.remote;
     else fig.classList.add('gone');
@@ -133,11 +143,23 @@ function picture(src, alt, cls, eager = false) {
   return fig;
 }
 /** Картинка сцены на карте: пока грузится или если её нет, видна заливка масти со значком. */
-function art(src, alt, sp, { cls = '', eager = false } = {}) {
+function art(src, alt, sp, { cls = '', eager = false, sizes = SIZES.scene } = {}) {
   const c = `art sp${sp}${cls ? ` ${cls}` : ''}`;
-  const fig = picture(src, alt, c, eager) || el('figure', { class: c });
+  const fig = picture(src, alt, c, eager, sizes) || el('figure', { class: c });
   fig.append(el('span', { class: 'art-mark' }, icon(sp)));
   return fig;
+}
+/** Заранее грузит картинку сцены в том размере, в каком её покажет сцена: следующая карта вырастет в неё без мигания.
+ *  Возвращает null, чтобы стоять прямо в списке детей el(). */
+function preloadScene(key) {
+  const src = imageFor(key);
+  if (!src || !src.set) return null;
+  const im = new Image();
+  im.decoding = 'async';
+  im.sizes = SIZES.scene;
+  im.srcset = src.set;
+  im.src = src.local;
+  return null;
 }
 
 // Смена экранов. Где браузер умеет View Transitions, выбранная карта переворачивается и становится итогом,
@@ -475,7 +497,7 @@ function renderResult() {
         grow),
       el('div', { class: fork.closed.length ? 'fork-row' : 'fork-row solo' },
         el('div', { class: `mini open deal sp${fork.sphere}`, style: '--i:3' },
-          art(imageFor(nextKey), '', fork.sphere, { cls: 'mini-art', eager: true }),
+          art(imageFor(nextKey), '', fork.sphere, { cls: 'mini-art', eager: true, sizes: SIZES.mini }), preloadScene(nextKey),
           el('div', { class: 'mini-body' },
             el('span', { class: 'mini-suit' }, icon(fork.sphere), SUITS[fork.sphere].name),
             el('b', { class: 'mini-title' }, `«${fork.title}»`),
@@ -544,7 +566,7 @@ function album() {
     el('ol', { class: 'album-grid' }, state.journal.map((j, i) => {
       const age = ageOf(j.episode);
       return el('li', {}, el('button', { class: `album-card sp${j.sphere}`, id: `memory-${i + 1}`, onclick: () => remember(i) },
-        art(imageFor(j.img), '', j.sphere),
+        art(imageFor(j.img), '', j.sphere, { sizes: SIZES.album }),
         el('span', { class: 'album-body' },
           el('span', { class: 'album-age' }, icon(j.sphere), `${age} ${yearsWord(age)}`),
           el('span', { class: 'album-title' }, j.title))));
@@ -565,7 +587,7 @@ function remember(at) {
     const age = ageOf(j.episode);
     dlg.replaceChildren(el('article', { class: `card memory-card sp${j.sphere}` },
       el('button', { class: 'memory-x', id: 'memory-close', 'aria-label': 'Закрыть', autofocus: true, onclick: close }, '×'),
-      art(imageFor(j.img), `${j.title}, ${ageText(age)}`, j.sphere, { eager: true }),
+      art(imageFor(j.img), `${j.title}, ${ageText(age)}`, j.sphere, { eager: true, sizes: SIZES.memory }),
       el('div', { class: 'card-body' },
         el('p', { class: 'card-meta' }, suitChip(j.sphere), `Тебе ${ageText(age)} · карта ${i + 1} из ${n}`),
         el('h2', { class: 'scene-title', id: 'memory-title' }, j.title),
@@ -832,7 +854,7 @@ function playIcon() {
   return svg;
 }
 function lifeReel(lastJ) {
-  const fig = art(imageFor(lastJ.img), 'Последний вечер', lastJ.sphere, { eager: true });
+  const fig = art(imageFor(lastJ.img), 'Последний вечер', lastJ.sphere, { eager: true, sizes: SIZES.finale });
   const fresh = endingFresh;
   endingFresh = false;
   const shots = state.journal.slice(0, -1).map((j) => ({ src: imageFor(j.img), age: ageOf(j.episode), title: j.title })).filter((s) => s.src);
@@ -847,7 +869,7 @@ function lifeReel(lastJ) {
   let frames = null;
   let run = 0; // номер показа: таймеры прошлого показа видят, что он уже не их, и молчат
   const frameSet = () => frames || (frames = shots.map((s, i) => fig.insertBefore(
-    el('img', { class: 'reel-frame', src: s.src.local, alt: '', decoding: 'async', fetchpriority: 'low', style: `transform-origin:${REEL_ORIGINS[i % REEL_ORIGINS.length]}` }), cap)));
+    el('img', { class: 'reel-frame', srcset: s.src.set || null, sizes: s.src.set ? SIZES.finale : null, src: s.src.local, alt: '', decoding: 'async', fetchpriority: 'low', style: `transform-origin:${REEL_ORIGINS[i % REEL_ORIGINS.length]}`, onerror: (e) => { const im = e.currentTarget; if (im.hasAttribute('srcset')) { im.removeAttribute('srcset'); im.removeAttribute('sizes'); } } }), cap)));
   const later = (mine, ms, f) => setTimeout(() => { if (mine === run && fig.isConnected) f(); }, ms);
   const playing = (on) => { fig.classList.toggle('playing', on); btn.setAttribute('aria-pressed', String(on)); if (!on) fig.classList.remove('cued'); };
   const stop = () => {
