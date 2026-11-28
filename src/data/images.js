@@ -163,7 +163,7 @@ export const portraitFor = (sex) => ageFor(sex, 6);
 // Картины глав и обложка: WebP 1024 px и 1536 px для плотных экранов, JPEG 1536 px — запасной src.
 const paintingSet = (name) => `img/${name}.webp 1024w, img/hd/${name}.webp 1536w`;
 // Где на картине лица (доля высоты для object-position): широкая рамка режет низ, а не головы.
-const FOCUS = { 'act-M-3': 2, 'act-F-3': 6, 'act-F-4': 10, 'end-M': 22, 'end-F': 2 };
+const FOCUS = { 'act-F-2': 0, 'act-M-3': 2, 'act-F-3': 6, 'act-F-4': 10, 'end-M': 22, 'end-F': 2 };
 // подпись справа, над рекой: слева внизу на этих картинах лица (младший брат, лица в эпилоге)
 const CAP_RIGHT = new Set(['act-F-1', 'end-F']);
 const focusOf = (name) => FOCUS[name] ?? 12;

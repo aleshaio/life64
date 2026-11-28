@@ -159,7 +159,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .card { background: var(--card); color: var(--ink); border-radius: var(--r-card); box-shadow: var(--lift); overflow: hidden; min-width: 0; }
 .card-body { padding: 1.05rem 1.15rem 1.3rem; display: flex; flex-direction: column; gap: .8rem; min-width: 0; }
 /* мета карты идёт строкой: точка остаётся при масти, а возраст переносится словами, без висящей точки */
-.card-meta { margin: 0; display: block; font-size: .85rem; line-height: 1.45; color: var(--ink-dim); }
+.card-meta { margin: 0; display: block; font-size: .85rem; line-height: 1.45; color: var(--ink-dim); text-wrap: wrap; }
 .card-meta .suit { display: inline; margin-right: .4rem; vertical-align: baseline; }
 .card-meta .suit .ico { display: inline-block; vertical-align: -.16em; margin-right: .3rem; }
 .card-meta .suit::after { color: inherit; }
@@ -277,6 +277,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .path-step, .path-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .path-step .hex { width: 100%; max-width: .9rem; height: auto; aspect-ratio: 20 / 23; color: var(--table-mid); }
 .path-step .hex .hl { fill: var(--accent); }
+/* на большом экране гексаграммы пути крупнее: одна клетка рисунка — один пиксель, черты чёткие */
+@media (min-width: 48rem) { .path-row { max-width: 40rem; } .path-step .hex { max-width: 1.25rem; } }
 .path-step::after { content: ""; width: 4px; height: 4px; border-radius: 50%; }
 .path-step.now .hex { color: var(--table-ink); }
 .path-step.now::after { background: var(--accent); }
@@ -310,7 +312,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .grow-face figcaption { font-size: .72rem; line-height: 1.2; color: var(--table-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .grow-face:last-child figcaption { color: var(--accent); font-weight: 600; }
 .grow-arrow { align-self: center; margin-top: -1rem; color: var(--table-mid); }
-.mini.closed { flex-direction: row; align-items: baseline; gap: .7rem; padding: .55rem .8rem; color: var(--table-dim); border: 1px dashed var(--table-line); }
+.mini.closed { flex-direction: row; align-items: center; gap: .7rem; padding: .55rem .8rem; color: var(--table-dim); border: 1px dashed var(--table-line); }
 .mini-suit { display: inline-flex; align-items: center; gap: .3rem; font-size: .84rem; font-weight: 600; color: var(--ink-dim); }
 .mini-suit .ico { color: var(--sp); }
 .mini.closed .mini-suit, .mini.closed .mini-suit .ico { color: var(--table-dim); }
@@ -447,8 +449,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .bar-fill { display: block; height: 100%; border-radius: 99px; background: var(--card-3); }
 .bar.lead .bar-name b, .bar.lead .bar-num { color: var(--ink); font-weight: 700; }
 .bar.lead .bar-fill { background: var(--accent-deep); }
-.table-text { margin: 0; font-size: 1.06rem; line-height: 1.6; color: var(--table-ink); }
+.table-text { margin: 0 auto; max-width: 38rem; font-size: 1.06rem; line-height: 1.6; color: var(--table-dim); text-align: center; text-wrap: balance; }
 .cast { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18.5rem), 1fr)); }
+/* в две колонки последний человек без пары встаёт по центру, а не сиротой слева */
+@media (min-width: 48rem) { .cast > .person:last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc(50% - .3rem); } }
 .person { display: flex; align-items: flex-start; gap: .7rem; padding: .8rem .9rem; border-radius: 14px; background: var(--card); color: var(--ink); box-shadow: var(--lift); font-size: .94rem; line-height: 1.4; }
 .person .muted { color: var(--ink-dim); }
 /* 1.1: портрет человека вместо буквы, в тонкой золотой кайме */
@@ -481,6 +485,15 @@ th { text-align: left; color: var(--table-dim); font-weight: 600; border-bottom:
 td { border-bottom: 1px solid var(--table-line); padding: .4rem .5rem; vertical-align: top; }
 td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 td .td-sub { display: block; margin-top: .1rem; font-size: .92em; }
+/* на телефоне строка маршрута — карточка: возраст, состояние и черта сверху, поступок под ними во всю ширину */
+@media (max-width: 40rem) {
+  .reveal table { min-width: 0; width: 100%; }
+  .reveal tr { display: grid; grid-template-columns: 4.1rem minmax(0, 1fr) auto; border-bottom: 1px solid var(--table-line); }
+  .reveal th, .reveal td { border: 0; }
+  .reveal th:last-child { display: none; }
+  .reveal td:last-child { grid-column: 2 / -1; padding-top: 0; padding-bottom: .55rem; }
+}
+@media (min-width: 40.0625rem) { .reveal th { white-space: nowrap; } .reveal td { text-wrap: balance; } }
 .ending .actions { display: flex; justify-content: center; }
 @media (max-width: 40rem) {
   .ages-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -489,7 +502,7 @@ td .td-sub { display: block; margin-top: .1rem; font-size: .92em; }
   .map-row { grid-template-columns: 1.6rem repeat(4, minmax(0, 1fr)); }
   .map-h span { display: none; }
 }
-@media (min-width: 40rem) { .type-sum { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; } }
+@media (min-width: 40rem) { .type-sum { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; } .type-plus { align-self: center; } }
 @media (min-width: 48rem) { .legendary-in { padding: 2rem 2.1rem 2.1rem; } .type-grid { grid-template-columns: 1fr 1fr; gap: 2rem; } }
 
 /* под картой типа: поделиться картинкой */
@@ -4621,7 +4634,7 @@ const portraitFor = (sex) => ageFor(sex, 6);
 // Картины глав и обложка: WebP 1024 px и 1536 px для плотных экранов, JPEG 1536 px — запасной src.
 const paintingSet = (name) => `img/${name}.webp 1024w, img/hd/${name}.webp 1536w`;
 // Где на картине лица (доля высоты для object-position): широкая рамка режет низ, а не головы.
-const FOCUS = { 'act-M-3': 2, 'act-F-3': 6, 'act-F-4': 10, 'end-M': 22, 'end-F': 2 };
+const FOCUS = { 'act-F-2': 0, 'act-M-3': 2, 'act-F-3': 6, 'act-F-4': 10, 'end-M': 22, 'end-F': 2 };
 // подпись справа, над рекой: слева внизу на этих картинах лица (младший брат, лица в эпилоге)
 const CAP_RIGHT = new Set(['act-F-1', 'end-F']);
 const focusOf = (name) => FOCUS[name] ?? 12;
@@ -5919,7 +5932,7 @@ function renderStart() {
     el('span', { class: 'logo-slot' }, startMark()),
     el('p', { class: 'eyebrow' }, '16 решений · от 6 до 84 лет'),
     el('h1', { class: 'title' }, 'Прожить жизнь'),
-    el('p', { class: 'lede' }, 'Город на большой реке, шестнадцать возрастов. В каждом тебе сдают сцену и четыре карты поступков, и каждая ведёт в свою сторону жизни. Люди запомнят твои поступки, а в конце станет ясно, каким человеком была прожита эта жизнь.'),
+    el('p', { class: 'lede' }, 'Город на большой реке, шестнадцать возрастов. В каждом тебе сдают сцену и четыре карты поступков, и каждая ведёт в свою сторону жизни. Люди запомнят твои поступки, а в конце станет ясно, каким человеком была прожита\u00a0эта\u00a0жизнь.'),
     el('ul', { class: 'suit-legend', 'aria-label': 'Четыре масти' }, SUITS.map((s, i) => el('li', {}, suitChip(i)))),
     newsNote(saved),
     hadBroken ? el('p', { class: 'warn' }, 'Прошлое сохранение повреждено и не может быть восстановлено. Можно начать новую жизнь.') : null,
