@@ -555,7 +555,7 @@ body::after { background:
 /* отклик: карты и кнопки мягко приподнимаются под курсором и чуть оседают при нажатии; кольцо фокуса — акцент
    (на бумаге — тёмный акцент, чтобы кольцо было видно) */
 @media (hover: hover) {
-  .btn-go:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--accent-deep), 0 16px 28px var(--shade); }
+  .btn-go:hover:not(:active) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--accent-deep), 0 16px 28px var(--shade); }
   .btn-soft:hover { background-color: var(--table-hi); }
   .link:hover { color: var(--table-ink); }
   .link.danger:hover { color: var(--danger); text-decoration-thickness: 2px; }
