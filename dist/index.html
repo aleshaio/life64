@@ -5518,7 +5518,7 @@ const fluff = (px) => sprite(px * 15, px * 15, (x) => {
     const a = i * Math.PI / 11 + .15 * Math.sin(i * 2.3), r = .55 + .35 * Math.abs(Math.sin(i * 1.7));
     x.moveTo(0, 0); x.lineTo(Math.cos(a) * r, Math.sin(a) * r);
   }
-  x.strokeStyle = 'rgba(255, 250, 236, .55)'; x.lineWidth = .045; x.stroke();
+  x.strokeStyle = 'rgba(255, 250, 236, .7)'; x.lineWidth = .05; x.stroke();
   const gr = x.createRadialGradient(0, 0, 0, 0, 0, .6);
   gr.addColorStop(0, 'rgba(255, 248, 228, .9)'); gr.addColorStop(.3, 'rgba(255, 248, 228, .35)'); gr.addColorStop(1, 'rgba(255, 248, 228, 0)');
   x.fillStyle = gr; x.fillRect(-.6, -.6, 1.2, 1.2);
@@ -5536,10 +5536,10 @@ const AIR = [null,
       make: (z) => ({ size: 3.5 + 2.5 * z, vx: rnd(.8, 2), vy: rnd(-.6, .8), A: rnd(1, 2.5), w: rnd(.3, .7), a: .3 + .3 * z, tw: .55, tf: rnd(.8, 1.6) }) },
   ] },
   { k: .9, kinds: [ // лето: тёплые пылинки света медленно поднимаются и мерцают, изредка проплывает пух одуванчика
-    { share: .75, look: () => [glow('255, 220, 146', .36, '255, 251, 238')],
-      make: (z) => ({ size: 7 + 9 * z, vx: rnd(-.5, .8), vy: -rnd(2.2, 4.5), A: rnd(1.5, 3.5), w: rnd(.25, .6), a: .6 + .35 * z, tw: .5, tf: rnd(.6, 1.5) }) },
-    { share: .25, look: (px) => [fluff(px)],
-      make: (z) => ({ size: 12 + 6 * z, vx: rnd(.8, 2.2), vy: -rnd(2.5, 4), A: rnd(2, 4), w: rnd(.35, .8), spin: rnd(-.4, .4), a: .6 + .25 * z, tw: .25, tf: rnd(.5, 1) }) },
+    { share: .65, look: () => [glow('255, 220, 146', .36, '255, 251, 238')],
+      make: (z) => ({ size: 8 + 11 * z, vx: rnd(-.5, .8), vy: -rnd(2.2, 4.5), A: rnd(1.5, 3.5), w: rnd(.25, .6), a: .6 + .35 * z, tw: .5, tf: rnd(.6, 1.5) }) },
+    { share: .35, look: (px) => [fluff(px)],
+      make: (z) => ({ size: 14 + 8 * z, vx: rnd(.8, 2.2), vy: -rnd(2.5, 4), A: rnd(2, 4), w: rnd(.35, .8), spin: rnd(-.4, .4), a: .7 + .25 * z, tw: .25, tf: rnd(.5, 1) }) },
   ] },
   { k: .75, kinds: [ // осень: янтарные, ржавые и золотые листья кружат и падают медленнее на краях размаха
     { share: 1, look: (px) => [leaf(px, 0, '#f2c45a', '#c58a2a'), leaf(px, 0, '#e8a040', '#b0621f'), leaf(px, 1, '#d77a3c', '#8e3b1d'), leaf(px, 1, '#e6a743', '#b5682a')],
