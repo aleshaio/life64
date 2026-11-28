@@ -4525,7 +4525,7 @@ const chapterArt = (sex, n) => ({ local: `img/${ART_PREFIX}act-${sex}-${n}.jpg`,
 const COVER_ART = { local: 'img/cover.jpg', set: paintingSet('cover'), remote: null };
 /** Картины типов жизни (1.1): символическая сцена на тип, без лица героя, одна на него и на неё. Ключ — стихия и роль, например earth-IS.
  *  В списке только уже нарисованные: для остальных картины в карте типа нет. */
-const TYPE_ART = new Set([]);
+const TYPE_ART = new Set(['air-EN', 'air-IN', 'air-IS', 'air-ES']);
 const typeArt = (quad, role) => (TYPE_ART.has(`${quad}-${role}`) ? { local: `img/type-${quad}-${role}.jpg`, set: paintingSet(`type-${quad}-${role}`), remote: null } : null);
 /** Эпилог: герой в старости, каким его запомнили (поздняя осень у него, ранняя весна у неё). */
 const endArt = (sex) => ({ local: `img/${ART_PREFIX}end-${sex}.jpg`, set: paintingSet(`${ART_PREFIX}end-${sex}`), focus: focusOf(`end-${sex}`), remote: null });
@@ -5997,7 +5997,8 @@ async function typeCard(t, ep) {
   if (!ctx) return null;
   const F = "Onest, 'Segoe UI', Roboto, system-ui, sans-serif";
   try { await Promise.all(['700 96px Onest', '600 28px Onest', '500 40px Onest'].map((f) => document.fonts.load(f))); } catch { /* запасной шрифт */ }
-  const [faces, mark] = await Promise.all([Promise.all(PORTRAIT_AGES.map((a) => loadImage(ageFor(state.sex, a).local))), loadImage('mark-paper.png')]);
+  const paint = typeArt(t.quad, t.role);
+  const [faces, mark, pic] = await Promise.all([Promise.all(PORTRAIT_AGES.map((a) => loadImage(ageFor(state.sex, a).local))), loadImage('mark-paper.png'), paint ? loadImage(paint.local) : null]);
   // стол
   ctx.fillStyle = '#1a2427';
   ctx.fillRect(0, 0, W, H);
@@ -6019,10 +6020,32 @@ async function typeCard(t, ep) {
   roundRect(ctx, X + 6, Y + 6, CW - 12, CH - 12, 35);
   ctx.fill();
   const L = X + 64, R = X + CW - 64, IW = R - L;
+  const gap = 12, fw = (IW - gap * 5) / 6, fh = fw * 1.25;
+  let fy = Y + 64;
+  // 1.1: картина типа полосой по верху карты, лица ложатся на её нижний край
+  if (pic) {
+    const bx = X + 6, by = Y + 6, bw = CW - 12, bh = 392;
+    ctx.save();
+    roundRect(ctx, bx, by, bw, CH - 12, 35);
+    ctx.clip();
+    const s = Math.max(bw / pic.naturalWidth, bh / pic.naturalHeight), sw = bw / s, sh = bh / s;
+    ctx.drawImage(pic, (pic.naturalWidth - sw) / 2, (pic.naturalHeight - sh) * 0.45, sw, sh, bx, by, bw, bh);
+    ctx.restore();
+    ctx.fillStyle = 'rgba(169, 130, 56, .6)';
+    ctx.fillRect(bx, by + bh, bw, 2);
+    fy = by + bh - Math.round(fh * 0.5);
+  }
   // одно лицо, шесть возрастов
-  const gap = 12, fw = (IW - gap * 5) / 6, fh = fw * 1.25, fy = Y + 64;
   faces.forEach((im, k) => {
     const x = L + k * (fw + gap);
+    if (pic) { // бумажная рамка с тенью, чтобы лица читались поверх картины
+      ctx.save();
+      ctx.shadowColor = 'rgba(20, 28, 31, .35)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
+      ctx.fillStyle = '#f7f3ec';
+      roundRect(ctx, x - 6, fy - 6, fw + 12, fh + 12, 20);
+      ctx.fill();
+      ctx.restore();
+    }
     ctx.save();
     roundRect(ctx, x, fy, fw, fh, 16);
     ctx.clip();
