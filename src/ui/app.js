@@ -862,7 +862,7 @@ async function typeCard(t, ep) {
   let fy = Y + 64;
   // 1.1: картина типа полосой по верху карты, лица ложатся на её нижний край
   if (pic) {
-    const bx = X + 6, by = Y + 6, bw = CW - 12, bh = 392;
+    const bx = X + 6, by = Y + 6, bw = CW - 12, bh = 336;
     ctx.save();
     roundRect(ctx, bx, by, bw, CH - 12, 35);
     ctx.clip();
