@@ -3,7 +3,7 @@
 import { newGame, buildScene, applyChoice, acknowledge, isOver, pendingResult, buildEpilogue, ageText, ageOf, forkOf, sceneMap, yearsWord, TOTAL_EPISODES, START_OPTIONS } from '../core/engine.js';
 import { storage } from '../core/save.js';
 import { AGES, CHAPTERS } from '../data/life.js';
-import { imageFor, portraitFor, ageFor, hasFace, PORTRAIT_AGES, chapterArt, COVER_ART, endArt } from '../data/images.js';
+import { imageFor, portraitFor, ageFor, hasFace, PORTRAIT_AGES, chapterArt, COVER_ART, endArt, typeArt } from '../data/images.js';
 import { QUAD_ORDER, ROLE_ORDER, QUAD_RU, ROLE_RU } from '../data/types.js';
 import { PATTERN_BY_N } from '../data/patterns.js';
 import { coords, bitString, glyph, line, hexNumber } from '../core/hexagram.js';
@@ -180,6 +180,7 @@ const SIZES = {
   face: '(min-width: 48rem) 52px, 44px',
   hero: '(min-width: 48rem) 340px, calc(50vw - 24px)',
   strip: '(min-width: 40rem) 104px, 25vw',
+  typeArt: '(min-width: 52rem) 828px, calc(100vw - 36px)',
 };
 function picture(src, alt, cls, eager = false, sizes = SIZES.scene) {
   if (!src) return null;
@@ -1138,6 +1139,7 @@ function renderEnding() {
         el('p', { class: 'type-kicker' }, g('Ты {прожил|прожила} эту жизнь как')),
         el('h2', { class: Math.max(...t.name.split(/\s+/).map((w) => w.length)) > 10 ? 'type-name long' : 'type-name' }, t.name),
         el('p', { class: 'type-essence' }, t.essence),
+        typeArt(t.quad, t.role) ? painting(typeArt(t.quad, t.role), `Картина к типу «${t.name}»`, 'type-art', SIZES.typeArt) : null,
         el('div', { class: 'type-why' },
           el('h3', { class: 'label' }, 'Из чего сложился тип'),
           el('div', { class: 'type-sum' },

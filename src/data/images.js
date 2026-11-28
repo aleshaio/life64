@@ -164,6 +164,10 @@ export const portraitFor = (sex) => ageFor(sex, 6);
 const paintingSet = (name) => `img/${name}.webp 1024w, img/hd/${name}.webp 1536w`;
 export const chapterArt = (sex, n) => ({ local: `img/${ART_PREFIX}act-${sex}-${n}.jpg`, set: paintingSet(`${ART_PREFIX}act-${sex}-${n}`), remote: null });
 export const COVER_ART = { local: 'img/cover.jpg', set: paintingSet('cover'), remote: null };
+/** Картины типов жизни (1.1): символическая сцена на тип, без лица героя, одна на него и на неё. Ключ — стихия и роль, например earth-IS.
+ *  В списке только уже нарисованные: для остальных картины в карте типа нет. */
+export const TYPE_ART = new Set([]);
+export const typeArt = (quad, role) => (TYPE_ART.has(`${quad}-${role}`) ? { local: `img/type-${quad}-${role}.jpg`, set: paintingSet(`type-${quad}-${role}`), remote: null } : null);
 /** Эпилог: герой в старости, каким его запомнили (поздняя осень у него, ранняя весна у неё). */
 export const endArt = (sex) => ({ local: `img/${ART_PREFIX}end-${sex}.jpg`, set: paintingSet(`${ART_PREFIX}end-${sex}`), remote: null });
 /** Картинки для скачивания: [локальное имя без .jpg, id на сервере]. Локальные (LOCAL) скачивать неоткуда; в 1.0 это все. */

@@ -601,6 +601,15 @@ body::after { background:
 .legendary.play .map64 .on { animation: seal-on 1s 1.2s ease-out backwards; }
 .legendary.play :is(.type-kicker, .type-name, .type-essence) { animation: seal-title .7s 1.45s cubic-bezier(.2, .8, .2, 1) backwards; }
 .legendary.play .type-name { animation-delay: 1.55s; }
+/* 1.1: картина типа — полосой во всю ширину карты, под сутью типа; проявляется после имени */
+.type-art { position: relative; margin: .15rem -1.2rem 0; aspect-ratio: 2 / 1; overflow: hidden; background: linear-gradient(160deg, var(--card-2), var(--table-dim));
+  border-block: 1px solid rgba(169, 130, 56, .38); }
+.type-art img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; display: block; opacity: 0; transition: opacity .8s ease; }
+.type-art.ready img { opacity: 1; }
+.type-art.gone { display: none; }
+@media (min-width: 48rem) { .type-art { margin-inline: -2.1rem; aspect-ratio: 2.3 / 1; } }
+.legendary.armed:not(.play) .type-art { opacity: 0; }
+.legendary.play .type-art { animation: seal-title .9s 1.75s cubic-bezier(.2, .8, .2, 1) backwards; }
 .legendary.play .type-essence { animation-delay: 1.7s; }
 .legendary.play::after { animation: shine 1.8s 2s ease-out both; }
 @keyframes seal-line { from { transform: scaleX(0); } }
